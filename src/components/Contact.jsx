@@ -162,13 +162,12 @@ const Contact = () => {
             </div>
 
             {/* Quick Response */}
-            <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl p-6 text-white">
-              
+            <div className= "bg-gradient-to-r from-purple-500 to-pink-500 dark:bg-gradient-to-r dark:from-purple-600 dark:to-pink-600 rounded-xl p-6 text-white">              
               <div className="flex items-center space-x-3 mb-3">
                 <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                <h4 className="text-lg font-semibold text-gray-900 dark:text-white">Available for Projects</h4>
+                <h4 className="text-lg font-semibold dark:text-white">Available for Projects</h4>
               </div>
-              <p className="text-gray-600 dark:text-gray-300">
+              <p className="text-gray-600 dark:text-gray-300 text-slate-200">
                 I'm currently accepting new freelance projects and full-time opportunities.
               </p>
             </div>

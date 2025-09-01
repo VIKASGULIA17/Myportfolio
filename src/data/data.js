@@ -17,7 +17,7 @@ export const portfolioData = {
     description: "I'm a passionate Data Scientist and Web Developer with expertise in turning complex data into actionable insights and building seamless digital experiences. Currently pursuing B.C.A. and constantly exploring the intersection of data science and web technologies.",
     highlights: [
       "2+ years of experience in data science and web development",
-      "Built 5+ production-ready applications",
+      "Built 6+ production-ready applications",
       "Expertise in ML model deployment and web integration",
       "Strong background in Front-end development"
     ],
@@ -30,7 +30,20 @@ export const portfolioData = {
   },
 
   projects: [
+    {
+    id: 7,
+    title: "Laptop Scout",
+    description:
+      "Built a robust data pipeline with automated weekly updates to analyze Amazon laptop prices, featuring an interactive dashboard with advanced filters and highlights for seamless price comparisons and brand insights.",
+    tech: ["Python", "Streamlit", "Serp Api", "SQLite","Plotly"],
+    image: "https://images.unsplash.com/photo-1522199755839-a2bacb67c546?q=80&w=1472&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    github: "https://github.com/VIKASGULIA17/Laptop-Price-Tracker",
+    live: "https://laptop-scout.streamlit.app/",
+    category: "Data Science",
+    featured: true
+  },
   {
+    
     id: 1,
     title: "Ani-gpt",
     description:
@@ -42,18 +55,7 @@ export const portfolioData = {
     category: "AI/ML",
     featured: true
   },
-  {
-    id: 2,
-    title: "Nerverse",
-    description:
-      "Engineered the official website for IITM Janakpuri's tech society, NexVerse. Highlights events, announcements, member profiles, and collaborations via an interactive and modern UI.",
-    tech: ["Next.js", "TypeScript", "Tailwind CSS", "Supabase"],
-    image: "https://images.unsplash.com/photo-1517180102446-f3ece451e9d8?w=600&h=400&fit=crop",
-    github: "https://github.com/tejveer755/Nexverse",
-    live: "https://nexverse-lake.vercel.app/",
-    category: "Web Development",
-    featured: true
-  },
+  
   {
     id: 3,
     title: "Student Marks Performance Prediction",
@@ -92,6 +94,18 @@ export const portfolioData = {
     featured: false
   },
   {
+    id: 2,
+    title: "Nerverse",
+    description:
+      "Engineered the official website for IITM Janakpuri's tech society, NexVerse. Highlights events, announcements, member profiles, and collaborations via an interactive and modern UI.",
+    tech: ["Next.js", "TypeScript", "Tailwind CSS", "Supabase"],
+    image: "https://images.unsplash.com/photo-1517180102446-f3ece451e9d8?w=600&h=400&fit=crop",
+    github: "https://github.com/tejveer755/Nexverse",
+    live: "https://nexverse-lake.vercel.app/",
+    category: "Web Development",
+    featured: false
+  },
+  {
     id: 6,
     title: "Portfolio Website",
     description:
@@ -100,9 +114,10 @@ export const portfolioData = {
     image: "https://images.unsplash.com/photo-1499951360447-b19be8fe80f5?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     github: "https://github.com/VIKASGULIA17/PortFolio",
     live: "https://vikasguliaportfolio.netlify.app/",
-    category: "Full Stack",
+    category: "Front end",
     featured: false
   },
+  
   
 ]
 ,
@@ -170,8 +185,8 @@ export const portfolioData = {
         description: "Advanced certification covering statistical analysis, data visualization, and predictive modeling"
       },
       {
-        name: "Training Completion Certificate in AI and ML",
-        issuer: "Industry Training Program",
+        name: "Artificial intelligence and machine learning in python",
+        issuer: "ShapeMySkills by Dukat",
         year: "2025",
         description: "Intensive training program covering artificial intelligence algorithms and machine learning techniques"
       },
@@ -180,7 +195,13 @@ export const portfolioData = {
         issuer: "IBM / Cognitive Class",
         year: "2025",
         description: "Comprehensive course covering Python programming for data analysis, pandas, numpy, and data visualization"
-      }
+      },
+      {
+        name: "Code of Duty Winner",
+        issuer: "Techno Sapiens",
+        year: "2025",
+        description: "A Competitive Programming contest"
+      },
     ]
   },
 
