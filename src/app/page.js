@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { Suspense, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 
 import Header from '../components/Header'
@@ -13,7 +13,7 @@ import Blog from '../components/Blog'
 import Contact from '../components/Contact'
 import Footer from '../components/Footer'
 
-export default function HomePage() {
+function ScrollToSection() {
   const searchParams = useSearchParams()
 
   useEffect(() => {
@@ -29,8 +29,15 @@ export default function HomePage() {
     }
   }, [searchParams])
 
+  return null
+}
+
+export default function HomePage() {
   return (
     <div className="App">
+      <Suspense fallback={null}>
+        <ScrollToSection />
+      </Suspense>
       <Header />
       <main>
         <Hero />
