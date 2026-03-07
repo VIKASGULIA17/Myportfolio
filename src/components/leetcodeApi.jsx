@@ -1,35 +1,38 @@
 /**
  * LeetCode API client using alfa-leetcode-api.onrender.com
- * Session-cached with a 10-minute TTL to avoid rate limits.
+ * localStorage cache with 7-day TTL so API is only called once a week.
  */
 
 const BASE_URL = 'https://alfa-leetcode-api.onrender.com';
-const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 function cacheKey(path) {
-  return `lc_cache_${path}`;
+  return `lc_v2_${path}`;
 }
 
 function getFromCache(path) {
   try {
-    const raw = sessionStorage.getItem(cacheKey(path));
+    const raw = localStorage.getItem(cacheKey(path));
     if (!raw) return null;
     const { data, ts } = JSON.parse(raw);
     if (Date.now() - ts < CACHE_TTL_MS) {
-      console.log(`📦 Cache hit: ${path}`);
+      console.log(`📦 LC cache hit (${Math.round((Date.now() - ts) / 3600000)}h old): ${path}`);
       return data;
     }
+    // expired — remove stale entry
+    localStorage.removeItem(cacheKey(path));
   } catch {
-    // ignore
+    // ignore parse errors or quota issues
   }
   return null;
 }
 
 function saveToCache(path, data) {
   try {
-    sessionStorage.setItem(cacheKey(path), JSON.stringify({ data, ts: Date.now() }));
-  } catch {
-    // ignore quota errors
+    localStorage.setItem(cacheKey(path), JSON.stringify({ data, ts: Date.now() }));
+  } catch (e) {
+    // LocalStorage quota exceeded — silently ignore
+    console.warn('LC cache write failed:', e.message);
   }
 }
 
@@ -49,6 +52,17 @@ async function fetchEndpoint(path) {
 }
 
 class LeetCodeAPI {
+  /**
+   * Clears all locally-cached LeetCode data for a given username.
+   * Call this before re-fetching on manual refresh.
+   */
+  clearCache(username) {
+    const paths = ['', '/solved', '/badges', '/contest', '/submission?limit=10', '/calendar'];
+    paths.forEach(p => {
+      try { localStorage.removeItem(cacheKey(`/${username}${p}`)); } catch { }
+    });
+  }
+
   async getAllUserData(username) {
     const paths = {
       profile: `/${username}`,
@@ -71,15 +85,14 @@ class LeetCodeAPI {
         out[r.value.key] = r.value.data;
         out.errors[r.value.key] = null;
       } else {
-        const key = results[results.indexOf(r)] // fallback key
-        console.warn('❌ Failed endpoint:', r.reason?.message);
+        console.warn('❌ LeetCode endpoint failed:', r.reason?.message);
         out.errors[r.reason?.message ?? 'unknown'] = r.reason?.message;
       }
     }
 
-    // Attach fulfilled flags
-    for (const [key] of Object.entries(paths)) {
-      if (!out[key]) out[key] = null;
+    // Ensure all keys exist (null if missing)
+    for (const key of Object.keys(paths)) {
+      if (!(key in out)) out[key] = null;
     }
 
     console.log('📊 LeetCode data loaded:', Object.keys(out).filter(k => k !== 'errors' && out[k]));

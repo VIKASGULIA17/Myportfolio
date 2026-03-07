@@ -9,7 +9,7 @@ export const portfolioData = {
     location: "Delhi, India",
     github: "https://github.com/VIKASGULIA17",
     linkedin: "https://www.linkedin.com/in/vikas-gulia-b28255298",
-    instagram: "https://www.instagram.com/orewa__vikas",
+    instagram: "https://www.instagram.com/__vikas17_",
     avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop&crop=face"
   },
 
@@ -19,7 +19,7 @@ export const portfolioData = {
       "2+ years of experience in data science and web development",
       "Built 6+ production-ready applications",
       "Expertise in ML model deployment and web integration",
-      "Strong background in Front-end development"
+      "Strong background in Front-end and backend development"
     ],
     stats: [
       { label: "Projects Completed", value: "10+" },
@@ -30,6 +30,18 @@ export const portfolioData = {
   },
 
   projects: [
+    {
+    id: 8,
+    title: "Code Arena",
+    description:
+      "A full-stack competitive programming platform featuring real-time code execution, an interactive algorithm visualizer, and admin contest management. Built with a robust microservice-like architecture to securely compile and evaluate code submissions across multiple languages.",
+    tech: ["React", "Spring Boot", "MongoDB", "Judge0 Self Hosted", "Tailwind CSS", "Monaco Editor"],
+    image: "https://images.unsplash.com/photo-1605379399642-870262d3d051?q=80&w=1506&auto=format&fit=crop",
+    github: "https://github.com/VIKASGULIA17/Code-Arena", 
+    live: "https://code-arena-seven-ebon.vercel.app/", 
+    category: "Full Stack",
+    featured: true
+  },
     {
     id: 7,
     title: "Laptop Scout",
@@ -66,7 +78,7 @@ export const portfolioData = {
     github: "https://github.com/VIKASGULIA17/Student_marks_predictor",
     live: "https://studentmarkspredicter.streamlit.app/",
     category: "Data Science",
-    featured: true
+    featured: false
   },
   
   {

@@ -125,7 +125,7 @@ const LeetCode = () => {
     const [refreshing, setRefreshing] = useState(false);
     const [dataSource, setDataSource] = useState('loading');
 
-    const username = 'vikas_gulia';
+    const username = 'Neerajj00';
 
     useEffect(() => { load(); }, []);
 
@@ -146,9 +146,8 @@ const LeetCode = () => {
     }
 
     async function handleRefresh() {
-        // Clear session cache for this user
-        const keys = Object.keys(sessionStorage).filter(k => k.startsWith('lc_cache_'));
-        keys.forEach(k => sessionStorage.removeItem(k));
+        // Clear 7-day localStorage cache for this user so fresh data is fetched
+        leetcodeApi.clearCache(username);
         setRefreshing(true);
         await load();
         setRefreshing(false);

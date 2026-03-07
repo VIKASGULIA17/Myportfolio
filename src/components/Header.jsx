@@ -3,208 +3,271 @@
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
-import { Menu, X, Github, Linkedin, Instagram } from 'lucide-react'
-import ThemeToggle from './ThemeToggle'
+import {
+  Menu, X, Sun, Moon,
+  Home, User, FolderGit2, BookOpen,
+  FileText, Code2, Github, MessageCircle
+} from 'lucide-react'
+import { useTheme } from '../contexts/ThemeContext'
 import { portfolioData } from '../data/data'
 
+// Navigation items — trimmed to the essentials
+const NAV_ITEMS = [
+  { name: 'Home', href: '#home', icon: Home, isSection: true },
+  { name: 'About', href: '#about', icon: User, isSection: true },
+  { name: 'Projects', href: '#projects', icon: FolderGit2, isSection: true },
+  { name: 'Skills', href: '#skills', icon: Code2, isSection: true },
+  { name: 'Blog', href: '#blog', icon: BookOpen, isSection: true },
+  { name: 'Resume', href: '/resume', icon: FileText, isSection: false, accent: '#a78bfa' },
+  { name: 'LeetCode', href: '/leetcode', icon: Code2, isSection: false, accent: '#ffa116' },
+  { name: 'GitHub', href: '/github', icon: Github, isSection: false, accent: '#4ade80' },
+  { name: 'Contact', href: '#contact', icon: MessageCircle, isSection: true },
+]
 
-const Header = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
+export default function Header() {
+  const [menuOpen, setMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
+  const { theme, toggleTheme, mounted } = useTheme()
+
+  const dark = theme === 'dark'
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 50)
-    }
-
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
+    const onScroll = () => setScrolled(window.scrollY > 40)
+    window.addEventListener('scroll', onScroll)
+    return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  const navigation = [
-    { name: 'Home', href: '#home', isSection: true },
-    { name: 'About', href: '#about', isSection: true },
-    { name: 'Projects', href: '#projects', isSection: true },
-    { name: 'Skills', href: '#skills', isSection: true },
-    { name: 'Education', href: '#education', isSection: true },
-    { name: 'Blog', href: '#blog', isSection: true },
-    { name: 'Resume', href: '/resume', isSection: false },
-    { name: 'Leetcode', href: '/leetcode', isSection: false },
-    { name: 'Contact', href: '#contact', isSection: true },
-  ]
-
-  const handleNavigation = async (item) => {
-    setIsMenuOpen(false)
-
+  const handleNav = async (item) => {
+    setMenuOpen(false)
     if (item.isSection) {
       if (pathname === '/') {
-        // Already on home page, smooth scroll
-        const element = document.querySelector(item.href)
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth' })
-        }
+        document.querySelector(item.href)?.scrollIntoView({ behavior: 'smooth' })
       } else {
-        // Navigate to home page with section query param for scroll after navigation
-        await router.push(`/?section=${item.href.substring(1)}`)
+        await router.push(`/?section=${item.href.slice(1)}`)
       }
     } else {
-      // For normal pages, just navigate
       router.push(item.href)
     }
   }
 
+  const isActive = (item) => !item.isSection && pathname === item.href
+
+  /* ─── colour tokens that work in both light and dark ─────────────────── */
+  const bgScrolled = dark
+    ? 'rgba(10,10,18,0.88)'
+    : 'rgba(255,255,255,0.88)'
+  const borderClr = dark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.08)'
+  const textMain = dark ? '#e2e8f0' : '#1e293b'
+  const textMuted = dark ? '#94a3b8' : '#64748b'
+
   return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? 'bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700'
-          : 'bg-transparent'
-      }`}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <div className="flex-shrink-0">
-            <Link
-              href="/"
-              className="text-xl font-bold bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Vikas Gulia
-            </Link>
-          </div>
+    <header style={{
+      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
+      background: scrolled ? bgScrolled : 'transparent',
+      backdropFilter: scrolled ? 'blur(18px) saturate(180%)' : 'none',
+      borderBottom: scrolled ? `1px solid ${borderClr}` : '1px solid transparent',
+      transition: 'background 0.3s, border-color 0.3s, backdrop-filter 0.3s',
+    }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 1.25rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 62 }}>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex space-x-8">
-            {navigation.map((item) =>
-              item.isSection ? (
-                <button
-                  key={item.name}
-                  onClick={() => handleNavigation(item)}
-                  className="text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 transition-colors duration-200 font-medium relative group focus:outline-none"
-                >
-                  {item.name}
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-300 group-hover:w-full"></span>
-                </button>
-              ) : (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className="text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 transition-colors duration-200 font-medium relative group focus:outline-none"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  {item.name}
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-300 group-hover:w-full"></span>
-                </Link>
-              )
+          {/* ── Logo ──────────────────────────────────────────────────────── */}
+          <Link href="/" onClick={() => setMenuOpen(false)}
+            style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 9, flexShrink: 0 }}>
+            <div style={{
+              width: 32, height: 32, borderRadius: 9,
+              background: 'linear-gradient(135deg,#a78bfa 0%,#ec4899 100%)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <Code2 size={15} color="#fff" strokeWidth={2.5} />
+            </div>
+            <span style={{
+              fontWeight: 800, fontSize: '1rem', letterSpacing: -0.4,
+              background: 'linear-gradient(135deg,#a78bfa,#ec4899)',
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+            }}>
+              Vikas
+            </span>
+          </Link>
+
+          {/* ── Desktop Nav ───────────────────────────────────────────────── */}
+          <NavItems
+            items={NAV_ITEMS}
+            isActive={isActive}
+            handleNav={handleNav}
+            textMain={textMain}
+            dark={dark}
+            isMobile={false}
+          />
+
+          {/* ── Right controls ────────────────────────────────────────────── */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {/* Social icon — GitHub */}
+            <a href={portfolioData.personal.github} target="_blank" rel="noreferrer"
+              title="GitHub"
+              style={{
+                color: textMuted, padding: 7, borderRadius: 8, display: 'flex',
+                transition: 'color 0.2s, background 0.2s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.color = '#4ade80'; e.currentTarget.style.background = 'rgba(74,222,128,0.1)' }}
+              onMouseLeave={e => { e.currentTarget.style.color = textMuted; e.currentTarget.style.background = 'transparent' }}
+            >
+              <Github size={18} />
+            </a>
+
+            {/* Theme toggle */}
+            {mounted && (
+              <button
+                onClick={toggleTheme}
+                aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  width: 36, height: 36, borderRadius: 10, cursor: 'pointer', border: 'none',
+                  background: dark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.07)',
+                  color: dark ? '#fbbf24' : '#475569',
+                  transition: 'transform 0.3s, background 0.2s, color 0.2s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'rotate(20deg) scale(1.1)' }}
+                onMouseLeave={e => { e.currentTarget.style.transform = 'rotate(0deg) scale(1)' }}
+              >
+                {dark ? <Sun size={16} /> : <Moon size={16} />}
+              </button>
             )}
-          </nav>
 
-          {/* Social Links & Theme Toggle */}
-          <div className="hidden md:flex items-center space-x-4">
-            <a
-              href={portfolioData.personal.github}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 transition-colors duration-200"
-              aria-label="GitHub"
-            >
-              <Github className="w-5 h-5" />
-            </a>
-            <a
-              href={portfolioData.personal.linkedin}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 transition-colors duration-200"
-              aria-label="LinkedIn"
-            >
-              <Linkedin className="w-5 h-5" />
-            </a>
-            <a
-              href={portfolioData.personal.instagram}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 transition-colors duration-200"
-              aria-label="Instagram"
-            >
-              <Instagram className="w-5 h-5" />
-            </a>
-          </div>
-
-          {/* Mobile menu button */}
-          <div className="md:hidden flex items-center space-x-2">
-            
+            {/* Hamburger – mobile only */}
             <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 focus:outline-none transition-colors duration-200"
-              aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+              onClick={() => setMenuOpen(!menuOpen)}
+              aria-label="Toggle menu"
+              style={{
+                display: 'none', /* shown by media query below */
+                background: 'transparent', border: 'none', cursor: 'pointer',
+                color: textMain, padding: 4, borderRadius: 8,
+              }}
+              className="nav-burger"
             >
-              {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {menuOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile Navigation */}
-      {isMenuOpen && (
-        <div className="md:hidden bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-          <div className="px-2 pt-2 pb-3 space-y-1">
-            {navigation.map((item) =>
-              item.isSection ? (
-                <button
-                  key={item.name}
-                  onClick={() => handleNavigation(item)}
-                  className="block w-full text-left px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 transition-colors duration-200 font-medium"
-                >
-                  {item.name}
-                </button>
-              ) : (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className="block w-full text-left px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 transition-colors duration-200 font-medium"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  {item.name}
-                </Link>
-              )
-            )}
-            <div className="flex space-x-4 px-3 py-2">
-              <a
-                href={portfolioData.personal.github}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 transition-colors duration-200"
-                aria-label="GitHub"
-              >
-                <Github className="w-5 h-5" />
-              </a>
-              <a
-                href={portfolioData.personal.linkedin}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 transition-colors duration-200"
-                aria-label="LinkedIn"
-              >
-                <Linkedin className="w-5 h-5" />
-              </a>
-              <a
-                href={portfolioData.personal.instagram}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 transition-colors duration-200"
-                aria-label="Instagram"
-              >
-                <Instagram className="w-5 h-5" />
-              </a>
-            </div>
-          </div>
+      {/* ── Mobile drawer ──────────────────────────────────────────────────── */}
+      {menuOpen && (
+        <div style={{
+          background: dark ? 'rgba(9,9,18,0.97)' : 'rgba(255,255,255,0.97)',
+          backdropFilter: 'blur(20px)',
+          borderTop: `1px solid ${borderClr}`,
+          padding: '0.75rem 1.25rem 1.5rem',
+        }}>
+          <NavItems
+            items={NAV_ITEMS}
+            isActive={isActive}
+            handleNav={handleNav}
+            textMain={textMain}
+            dark={dark}
+            isMobile={true}
+          />
         </div>
       )}
+
+      <style>{`
+        @media (max-width: 767px) {
+          .nav-desktop { display: none !important; }
+          .nav-burger  { display: flex !important; }
+        }
+        @media (min-width: 768px) {
+          .nav-desktop { display: flex !important; }
+          .nav-burger  { display: none !important; }
+        }
+      `}</style>
     </header>
   )
 }
 
-export default Header
+/* ─── Shared nav item list ──────────────────────────────────────────────── */
+function NavItems({ items, isActive, handleNav, textMain, dark, isMobile }) {
+  const [hov, setHov] = useState(null)
+
+  if (isMobile) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {items.map(item => {
+          const active = isActive(item)
+          const accent = item.accent ?? (dark ? '#c084fc' : '#7c3aed')
+          const color = active || hov === item.name ? accent : textMain
+          const Icon = item.icon
+          return item.isSection ? (
+            <button key={item.name} onClick={() => handleNav(item)}
+              onMouseEnter={() => setHov(item.name)} onMouseLeave={() => setHov(null)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left',
+                background: 'transparent', border: 'none', cursor: 'pointer',
+                padding: '10px 12px', borderRadius: 9, fontSize: '0.88rem', fontWeight: 500,
+                color, transition: 'color 0.2s',
+              }}>
+              <Icon size={15} /> {item.name}
+            </button>
+          ) : (
+            <Link key={item.name} href={item.href} onClick={() => handleNav(item)}
+              onMouseEnter={() => setHov(item.name)} onMouseLeave={() => setHov(null)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                textDecoration: 'none', padding: '10px 12px', borderRadius: 9,
+                fontSize: '0.88rem', fontWeight: 600,
+                color,
+                background: active ? `${accent}18` : 'transparent',
+                transition: 'color 0.2s, background 0.2s',
+              }}>
+              <Icon size={15} /> {item.name}
+            </Link>
+          )
+        })}
+      </div>
+    )
+  }
+
+  // Desktop
+  return (
+    <nav className="nav-desktop" style={{ alignItems: 'center', gap: 2 }}>
+      {items.map(item => {
+        const active = isActive(item)
+        const accent = item.accent ?? (dark ? '#c084fc' : '#7c3aed')
+        const color = active || hov === item.name ? accent : (dark ? '#cbd5e1' : '#475569')
+        const Icon = item.icon
+        const isHov = hov === item.name
+
+        return item.isSection ? (
+          <button key={item.name} onClick={() => handleNav(item)}
+            onMouseEnter={() => setHov(item.name)} onMouseLeave={() => setHov(null)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              background: isHov ? (dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)') : 'transparent',
+              border: 'none', cursor: 'pointer', padding: '6px 11px', borderRadius: 8,
+              fontSize: '0.82rem', fontWeight: 500, color, transition: 'color 0.2s, background 0.15s',
+            }}>
+            <Icon size={13} strokeWidth={2} /> {item.name}
+          </button>
+        ) : (
+          <Link key={item.name} href={item.href} onClick={() => setHov(null)}
+            onMouseEnter={() => setHov(item.name)} onMouseLeave={() => setHov(null)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              textDecoration: 'none', padding: '6px 11px', borderRadius: 8,
+              fontSize: '0.82rem', fontWeight: 600, color,
+              background: active
+                ? `${accent}20`
+                : isHov
+                  ? (dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)')
+                  : 'transparent',
+              boxShadow: active ? `0 0 10px ${accent}40` : 'none',
+              transition: 'color 0.2s, background 0.15s, box-shadow 0.2s',
+            }}>
+            <Icon size={13} strokeWidth={2} /> {item.name}
+          </Link>
+        )
+      })}
+    </nav>
+  )
+}

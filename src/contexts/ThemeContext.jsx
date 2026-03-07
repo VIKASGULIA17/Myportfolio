@@ -26,7 +26,7 @@ export const ThemeProvider = ({ children }) => {
   // Update the html tag class and persist theme whenever it changes
   useEffect(() => {
     if (!mounted) return; // Prevent running on server or before hydration
-    
+
     document.documentElement.classList.remove('light', 'dark');
     document.documentElement.classList.add(theme);
     localStorage.setItem('theme', theme);
@@ -36,13 +36,8 @@ export const ThemeProvider = ({ children }) => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   };
 
-  // Don't render children until mounted to avoid hydration mismatch
-  if (!mounted) {
-    return null;
-  }
-
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, toggleTheme, mounted }}>
       {children}
     </ThemeContext.Provider>
   );
