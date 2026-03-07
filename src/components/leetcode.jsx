@@ -1,737 +1,652 @@
 'use client'
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import {
-    Calendar,
-    Trophy,
-    Target,
-    TrendingUp,
-    User,
-    Code,
-    Clock,
-    Award,
-    BarChart3,
-    GitBranch,
-    RefreshCw
+    Trophy, Target, Calendar, TrendingUp,
+    Code, Award, RefreshCw, CheckCircle, Clock, ExternalLink
 } from 'lucide-react';
 import {
-    PieChart,
-    Pie,
-    Cell,
-    BarChart,
-    Bar,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    ResponsiveContainer,
-    LineChart,
-    Line
+    LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
+    ResponsiveContainer, PieChart, Pie, Cell, Legend
 } from 'recharts';
-import CalendarHeatmap from 'react-calendar-heatmap';
-import 'react-calendar-heatmap/dist/styles.css';
-import leetcodeApi from '../components/leetcodeApi';
+import leetcodeApi from './leetcodeApi';
 
+// ─── Theme tokens ────────────────────────────────────────────────────────────
+const T = {
+    bg: '#0d0d0f',
+    surface: 'rgba(255,255,255,0.04)',
+    surfaceHover: 'rgba(255,161,22,0.08)',
+    border: 'rgba(255,255,255,0.07)',
+    borderAccent: 'rgba(255,161,22,0.35)',
+    orange: '#ffa116',
+    orangeGlow: 'rgba(255,161,22,0.25)',
+    green: '#00b8a3',
+    yellow: '#ffc01e',
+    red: '#ef4743',
+    text: '#e8e8e8',
+    muted: '#8a8a9f',
+};
+
+// ─── Difficulty colours ───────────────────────────────────────────────────────
+const DC = { Easy: T.green, Medium: T.yellow, Hard: T.red };
+
+// ─── Helper: format unix timestamp ───────────────────────────────────────────
+function fmtTime(ts) {
+    if (!ts) return '—';
+    const d = new Date(Number(ts) * 1000);
+    return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' });
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function Card({ children, style, className = '', ...props }) {
+    return (
+        <motion.div
+            style={{
+                background: T.surface,
+                border: `1px solid ${T.border}`,
+                borderRadius: 16,
+                padding: '1.5rem',
+                backdropFilter: 'blur(12px)',
+                ...style,
+            }}
+            className={className}
+            {...props}
+        >
+            {children}
+        </motion.div>
+    );
+}
+
+function SectionTitle({ icon: Icon, children }) {
+    return (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '1.25rem' }}>
+            <Icon size={18} style={{ color: T.orange }} />
+            <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: T.text, letterSpacing: 0.3 }}>
+                {children}
+            </h3>
+        </div>
+    );
+}
+
+function KPICard({ icon: Icon, value, label, color = T.orange, delay = 0 }) {
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay, duration: 0.45, ease: 'easeOut' }}
+            whileHover={{ scale: 1.03, borderColor: T.borderAccent }}
+            style={{
+                background: T.surface,
+                border: `1px solid ${T.border}`,
+                borderRadius: 16,
+                padding: '1.5rem',
+                textAlign: 'center',
+                cursor: 'default',
+                transition: 'border-color 0.2s',
+            }}
+        >
+            <div style={{
+                width: 44, height: 44, borderRadius: 12,
+                background: `${color}22`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                margin: '0 auto 0.75rem',
+            }}>
+                <Icon size={20} style={{ color }} />
+            </div>
+            <div style={{ fontSize: '1.75rem', fontWeight: 800, color: T.text, lineHeight: 1 }}>{value}</div>
+            <div style={{ fontSize: '0.8rem', color: T.muted, marginTop: 6 }}>{label}</div>
+        </motion.div>
+    );
+}
+
+// ─── Custom tooltip for contest chart ────────────────────────────────────────
+function ContestTooltip({ active, payload }) {
+    if (!active || !payload?.length) return null;
+    const d = payload[0].payload;
+    return (
+        <div style={{
+            background: '#1a1a2a', border: `1px solid ${T.borderAccent}`,
+            borderRadius: 10, padding: '0.6rem 1rem', fontSize: '0.8rem', color: T.text
+        }}>
+            <div style={{ fontWeight: 700, color: T.orange, marginBottom: 4 }}>{d.title}</div>
+            <div>Rating: <b style={{ color: T.orange }}>{Math.round(d.rating)}</b></div>
+            <div>Rank: #{d.ranking?.toLocaleString()}</div>
+            <div>Solved: {d.problemsSolved}/{d.totalProblems}</div>
+        </div>
+    );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 const LeetCode = () => {
-    const [userData, setUserData] = useState(null);
+    const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [refreshing, setRefreshing] = useState(false);
-    const [dataSource, setDataSource] = useState('loading'); // 'real', 'mock', 'loading'
+    const [dataSource, setDataSource] = useState('loading');
 
     const username = 'vikas_gulia';
 
-    useEffect(() => {
-        fetchUserData();
-    }, []);
+    useEffect(() => { load(); }, []);
 
-    const fetchUserData = async () => {
+    async function load() {
         try {
             setLoading(true);
             setError(null);
             setDataSource('loading');
-
-            console.log('🔄 Starting data fetch...');
-            const data = await leetcodeApi.getAllUserData(username);
-
-            // Determine if we got real data or mock data
-            const isRealData = data.profile && !data.errors.profile;
-            setDataSource(isRealData ? 'real' : 'mock');
-
-            setUserData(data);
-            console.log(`✅ Data loaded successfully (${isRealData ? 'REAL' : 'MOCK'} data)`);
-        } catch (err) {
-            setError(err.message);
+            const d = await leetcodeApi.getAllUserData(username);
+            setData(d);
+            setDataSource(d.profile ? 'real' : 'error');
+        } catch (e) {
+            setError(e.message);
             setDataSource('error');
-            console.error('❌ Failed to load data:', err);
         } finally {
             setLoading(false);
         }
-    };
+    }
 
-    const handleRefresh = async () => {
+    async function handleRefresh() {
+        // Clear session cache for this user
+        const keys = Object.keys(sessionStorage).filter(k => k.startsWith('lc_cache_'));
+        keys.forEach(k => sessionStorage.removeItem(k));
         setRefreshing(true);
-        await fetchUserData();
+        await load();
         setRefreshing(false);
-    };
+    }
 
-    // Prepare chart data
-    const getStatsData = () => {
-        if (!userData?.profile?.matchedUser?.submitStats?.acSubmissionNum) return [];
+    // ── Derived data ──────────────────────────────────────────────────────────
 
-        const stats = userData.profile.matchedUser.submitStats.acSubmissionNum;
-        return stats
-            .filter(item => item.difficulty !== 'All')
-            .map(item => ({
-                difficulty: item.difficulty,
-                solved: item.count,
-                color: item.difficulty === 'Easy' ? '#00b894' :
-                    item.difficulty === 'Medium' ? '#fdcb6e' : '#e84393'
-            }));
-    };
+    const profile = data?.profile ?? {};
+    const solved = data?.solved ?? {};
+    const badgesData = data?.badges ?? {};
+    const contestData = data?.contest ?? {};
+    const submissions = data?.submissions?.submission ?? [];
+    const calendarData = data?.calendar ?? {};
 
-    const getSubmissionCalendarData = () => {
-        if (!userData?.calendar?.matchedUser?.userCalendar?.submissionCalendar) return [];
+    const kpis = [
+        {
+            icon: Target, label: 'Problems Solved',
+            value: solved.solvedProblem?.toLocaleString() ?? '—',
+            color: T.green, delay: 0.1
+        },
+        {
+            icon: Calendar, label: 'Active Days',
+            value: calendarData.totalActiveDays?.toString() ?? '—',
+            color: T.orange, delay: 0.2
+        },
+        {
+            icon: Trophy, label: 'Global Ranking',
+            value: profile.ranking ? `#${profile.ranking.toLocaleString()}` : '—',
+            color: T.yellow, delay: 0.3
+        },
+        {
+            icon: TrendingUp, label: 'Contest Rating',
+            value: contestData.contestRating ? Math.round(contestData.contestRating).toString() : '—',
+            color: T.red, delay: 0.4
+        },
+    ];
 
-        const calendar = JSON.parse(userData.calendar.matchedUser.userCalendar.submissionCalendar);
-        return Object.entries(calendar).map(([timestamp, count]) => ({
-            date: new Date(parseInt(timestamp) * 1000),
-            count: count
+    const pieData = [
+        { name: 'Easy', value: solved.easySolved ?? 0, color: T.green },
+        { name: 'Medium', value: solved.mediumSolved ?? 0, color: T.yellow },
+        { name: 'Hard', value: solved.hardSolved ?? 0, color: T.red },
+    ].filter(d => d.value > 0);
+
+    const contestHistory = (contestData.contestParticipation ?? [])
+        .filter(c => c.attended)
+        .map(c => ({
+            title: c.contest?.title ?? '',
+            rating: c.rating,
+            ranking: c.ranking,
+            problemsSolved: c.problemsSolved,
+            totalProblems: c.totalProblems,
+            date: c.contest?.startTime,
         }));
-    };
 
-    const containerVariants = {
-        hidden: { opacity: 0 },
-        visible: {
-            opacity: 1,
-            transition: {
-                staggerChildren: 0.1
-            }
-        }
-    };
+    const badges = badgesData.badges ?? [];
+    const totalSolved = solved.solvedProblem ?? 0;
 
-    const itemVariants = {
-        hidden: { y: 20, opacity: 0 },
-        visible: {
-            y: 0,
-            opacity: 1,
-            transition: {
-                type: "spring",
-                stiffness: 100
-            }
-        }
-    };
-
+    // ── Loading ───────────────────────────────────────────────────────────────
     if (loading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
+            <div style={{
+                minHeight: '100vh', background: T.bg,
+                display: 'flex', flexDirection: 'column',
+                alignItems: 'center', justifyContent: 'center', gap: 16
+            }}>
                 <motion.div
                     animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full"
+                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                    style={{
+                        width: 52, height: 52, borderRadius: '50%',
+                        border: `3px solid ${T.border}`,
+                        borderTop: `3px solid ${T.orange}`,
+                    }}
                 />
+                <p style={{ color: T.muted, fontSize: '0.9rem' }}>Fetching your LeetCode stats…</p>
             </div>
         );
     }
 
-    if (error) {
+    if (error && !data) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
-                <div className="text-center">
-                    <h2 className="text-2xl font-bold text-red-600 mb-4">Error Loading Data</h2>
-                    <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
+            <div style={{
+                minHeight: '100vh', background: T.bg,
+                display: 'flex', alignItems: 'center', justifyContent: 'center'
+            }}>
+                <div style={{ textAlign: 'center' }}>
+                    <p style={{ color: T.red, marginBottom: 16 }}>{error}</p>
                     <button
-                        onClick={fetchUserData}
-                        className="btn-gradient"
-                    >
-                        Retry
-                    </button>
+                        onClick={load}
+                        style={{
+                            background: T.orange, color: '#000', border: 'none',
+                            borderRadius: 8, padding: '8px 20px', cursor: 'pointer', fontWeight: 700
+                        }}
+                    >Retry</button>
                 </div>
             </div>
         );
     }
 
-    const profile = userData?.profile?.matchedUser;
-    const calendar = userData?.calendar?.matchedUser?.userCalendar;
-    const submissions = userData?.submissions?.recentAcSubmissionList;
-    const statsData = getStatsData();
-    const calendarData = getSubmissionCalendarData();
-
+    // ── Render ────────────────────────────────────────────────────────────────
     return (
-        <motion.div
-            className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-900 dark:to-gray-800 pt-28"
-            initial="hidden"
-            animate="visible"
-            variants={containerVariants}
-        >
-            <div className="container-custom section-padding">
-                {/* Header Section */}
+        <div style={{ minHeight: '100vh', background: T.bg, paddingTop: 96, paddingBottom: 60 }}>
+            {/* Ambient glow */}
+            <div style={{
+                position: 'fixed', top: 0, left: '50%', transform: 'translateX(-50%)',
+                width: 800, height: 400, borderRadius: '50%',
+                background: `radial-gradient(ellipse, ${T.orangeGlow} 0%, transparent 70%)`,
+                pointerEvents: 'none', zIndex: 0,
+            }} />
+
+            <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 1.5rem', position: 'relative', zIndex: 1 }}>
+
+                {/* ── Header ── */}
                 <motion.div
-                    className="text-center mb-12"
-                    variants={itemVariants}
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    style={{ textAlign: 'center', marginBottom: '2.5rem' }}
                 >
-                    <div className="flex items-center justify-center gap-4 mb-4">
-                        <h1 className="text-5xl font-bold text-gray-900 dark:text-white">
-                            LeetCode Dashboard
+                    {/* LeetCode wordmark */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 8 }}>
+                        <svg width="32" height="32" viewBox="0 0 95 111" fill="none">
+                            <path d="M68.8 83.1a5.8 5.8 0 0 1 0 8.2l-7.8 7.8a28 28 0 0 1-39.6 0L5.8 83.4a28 28 0 0 1 0-39.6l28-28A28 28 0 0 1 73 15.5l-9 9a5.8 5.8 0 0 1-8.2 0 16.3 16.3 0 0 0-23.1 0l-28 28a16.3 16.3 0 0 0 0 23l15.7 15.7a16.3 16.3 0 0 0 23 0l7.8-7.8a5.8 5.8 0 0 1 8.2 0 5.8 5.8 0 0 1 .4.7z" fill={T.orange} />
+                            <path d="M89.1 27.7 73.4 12a28 28 0 0 0-39.6 0l-7.8 7.8a5.8 5.8 0 0 0 8.2 8.2l7.8-7.8a16.3 16.3 0 0 1 23.1 0l15.7 15.7a16.3 16.3 0 0 1 0 23l-28 28a16.3 16.3 0 0 1-23 0 5.8 5.8 0 0 0-8.2 8.2 28 28 0 0 0 39.6 0l28-28a28 28 0 0 0 0-39.4z" fill="#B3B3B3" />
+                        </svg>
+                        <h1 style={{
+                            margin: 0, fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
+                            fontWeight: 800, color: T.text, letterSpacing: -0.5
+                        }}>
+                            LeetCode <span style={{ color: T.orange }}>Stats</span>
                         </h1>
-                        <button
-                            onClick={handleRefresh}
-                            disabled={refreshing}
-                            className="p-2 rounded-lg bg-white/20 dark:bg-gray-800/20 backdrop-blur-sm border border-white/30 dark:border-gray-700/30 hover:bg-white/30 dark:hover:bg-gray-800/30 transition-all duration-300 disabled:opacity-50"
-                            title="Refresh data"
-                        >
-                            <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
-                        </button>
                     </div>
-                    <p className="text-xl text-gray-600 dark:text-gray-400 mb-2">
-                       My coding journey and achievements
-                    </p>
-                    {/* Data Source Indicator */}
-                    <div className="flex items-center justify-center gap-2 pt-18">
+
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, flexWrap: 'wrap' }}>
+                        <span style={{
+                            background: 'rgba(255,255,255,0.06)', border: `1px solid ${T.border}`,
+                            borderRadius: 20, padding: '4px 14px', fontSize: '0.82rem', color: T.muted
+                        }}>@{profile.username ?? username}</span>
+
                         {dataSource === 'real' && (
-                            <span className="flex items-center gap-1 text-sm text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/20 px-3 py-1 rounded-full">
-                                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                            <span style={{
+                                display: 'flex', alignItems: 'center', gap: 6,
+                                background: 'rgba(0,184,163,0.12)', border: '1px solid rgba(0,184,163,0.3)',
+                                borderRadius: 20, padding: '4px 12px', fontSize: '0.78rem', color: T.green
+                            }}>
+                                <span style={{
+                                    width: 6, height: 6, borderRadius: '50%',
+                                    background: T.green, display: 'inline-block',
+                                    boxShadow: `0 0 6px ${T.green}`,
+                                    animation: 'pulse 2s infinite'
+                                }} />
                                 Live Data
                             </span>
                         )}
-                        {dataSource === 'mock' && (
-                            <span className="flex items-center gap-1 text-sm text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-900/20 px-3 py-1 rounded-full">
-                                <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                                Demo Data (CORS Limited)
-                            </span>
-                        )}
-                        {dataSource === 'loading' && (
-                            <span className="flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/20 px-3 py-1 rounded-full">
-                                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                                Loading...
-                            </span>
-                        )}
+
+                        <button
+                            onClick={handleRefresh}
+                            disabled={refreshing}
+                            title="Refresh (clears cache)"
+                            style={{
+                                background: 'transparent', border: `1px solid ${T.border}`,
+                                borderRadius: 8, padding: '4px 10px', cursor: 'pointer',
+                                color: T.muted, display: 'flex', alignItems: 'center', gap: 4,
+                                fontSize: '0.78rem', transition: 'border-color 0.2s',
+                            }}
+                        >
+                            <RefreshCw size={13} className={refreshing ? 'animate-spin' : ''} />
+                            Refresh
+                        </button>
                     </div>
                 </motion.div>
 
-                {/* Profile Card */}
+                {/* ── Profile Card ── */}
                 <motion.div
-                    className="card-glass p-8 mb-8"
-                    variants={itemVariants}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.05 }}
+                    style={{
+                        background: `linear-gradient(135deg, rgba(255,161,22,0.08) 0%, rgba(255,255,255,0.03) 100%)`,
+                        border: `1px solid ${T.borderAccent}`,
+                        borderRadius: 20, padding: '1.75rem', marginBottom: '1.75rem',
+                        display: 'flex', alignItems: 'center', gap: '1.5rem',
+                        flexWrap: 'wrap',
+                    }}
                 >
-                    <div className="flex flex-col lg:flex-row items-center gap-6">
-                        <div className="w-24 h-24 rounded-full overflow-hidden bg-gradient-to-r from-purple-500 to-pink-500 p-1">
+                    <div style={{ position: 'relative', flexShrink: 0 }}>
+                        <div style={{
+                            width: 80, height: 80, borderRadius: '50%',
+                            background: `linear-gradient(135deg, ${T.orange}, #ff6b35)`,
+                            padding: 3,
+                        }}>
                             <img
-                                src='/leetcode_profile.jpeg'
-                                alt="Profile"
-                                className="w-full h-full rounded-full object-cover bg-white"
+                                src={profile.avatar || `https://ui-avatars.com/api/?name=${username}&background=ffa116&color=000&size=96`}
+                                alt="avatar"
+                                style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', background: '#1a1a2e' }}
+                                onError={e => { e.target.src = `https://ui-avatars.com/api/?name=${username}&background=ffa116&color=000&size=96`; }}
                             />
                         </div>
-                        <div className="flex-1 text-center lg:text-left">
-                            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-                                {"Vikas Gulia"}
-                            </h2>
-                            <p className="text-gray-600 dark:text-gray-400 mb-2">
-                                @{profile?.username || username}
+                        {contestData.contestBadges?.name && (
+                            <span style={{
+                                position: 'absolute', bottom: -4, right: -4,
+                                background: '#2a1800', border: `1px solid ${T.orange}`,
+                                borderRadius: 6, padding: '1px 6px', fontSize: '0.6rem',
+                                color: T.orange, fontWeight: 700,
+                            }}>{contestData.contestBadges.name}</span>
+                        )}
+                    </div>
+
+                    <div style={{ flex: 1, minWidth: 200 }}>
+                        <h2 style={{ margin: '0 0 4px', fontSize: '1.4rem', fontWeight: 800, color: T.text }}>
+                            {profile.name ?? 'LeetCoder'}
+                        </h2>
+                        <p style={{ margin: '0 0 10px', fontSize: '0.85rem', color: T.muted }}>
+                            {profile.school && <><Code size={12} style={{ verticalAlign: 'middle', marginRight: 4 }} />{profile.school}&nbsp;·&nbsp;</>}
+                            {profile.country ?? 'India'}
+                        </p>
+                        {profile.about && (
+                            <p style={{
+                                margin: 0, fontSize: '0.82rem', color: T.muted,
+                                lineHeight: 1.55, maxWidth: 520,
+                                display: '-webkit-box', WebkitLineClamp: 2,
+                                WebkitBoxOrient: 'vertical', overflow: 'hidden'
+                            }}>
+                                {profile.about}
                             </p>
-                            <div className="flex text-black dark:text-white flex-wrap justify-center lg:justify-start gap-4 text-sm mb-4">
-                                <span className="flex items-center gap-1">
-                                    <Trophy className="w-4 h-4 text-yellow-500" />
-                                    Ranking: #{profile?.profile?.ranking || '285,330'}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                    <Award className="w-4 h-4 text-purple-500" />
-                                    {'9 Badges'}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                    <User className="w-4 h-4 text-blue-500" />
-                                    {'India'}
-                                </span>
-                            </div>
-                            {/* Skill Tags */}
-                            {profile?.profile?.skillTags && profile.profile.skillTags.length > 0 && (
-                                <div className="flex flex-wrap justify-center lg:justify-start gap-2">
-                                    {profile.profile.skillTags.map((skill, index) => (
-                                        <motion.span
-                                            key={skill}
-                                            className="px-3 py-1 bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-600 dark:text-purple-400 rounded-full text-xs font-medium border border-purple-500/20"
-                                            initial={{ opacity: 0, scale: 0.8 }}
-                                            animate={{ opacity: 1, scale: 1 }}
-                                            transition={{ delay: index * 0.1 }}
-                                        >
-                                            {skill}
-                                        </motion.span>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                        )}
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                        {profile.gitHub && (
+                            <a href={profile.gitHub} target="_blank" rel="noreferrer"
+                                style={{ color: T.muted, fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: 4, textDecoration: 'none' }}>
+                                <ExternalLink size={13} />GitHub
+                            </a>
+                        )}
+                        {profile.linkedIN && (
+                            <a href={profile.linkedIN} target="_blank" rel="noreferrer"
+                                style={{ color: T.muted, fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: 4, textDecoration: 'none' }}>
+                                <ExternalLink size={13} />LinkedIn
+                            </a>
+                        )}
                     </div>
                 </motion.div>
 
-                {/* Stats Cards Grid */}
-                <motion.div
-                    className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
-                    variants={itemVariants}
-                >
-                    {/* Total Solved */}
-                    <motion.div
-                        className="card-glass p-6 text-center"
-                        whileHover={{ scale: 1.05 }}
-                        transition={{ type: "spring", stiffness: 300 }}
-                    >
-                        <Target className="w-8 h-8 text-green-500 mx-auto mb-3" />
-                        <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
-                            {statsData.reduce((sum, item) => sum + item.solved, 0)}
-                        </h3>
-                        <p className="text-gray-600 dark:text-gray-400">Problems Solved</p>
-                    </motion.div>
-
-                    {/* Current Streak */}
-                    <motion.div
-                        className="card-glass p-6 text-center"
-                        whileHover={{ scale: 1.05 }}
-                        transition={{ type: "spring", stiffness: 300 }}
-                    >
-                        <TrendingUp className="w-8 h-8 text-orange-500 mx-auto mb-3" />
-                        <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
-                            {calendar?.streak || 84}
-                        </h3>
-                        <p className="text-gray-600 dark:text-gray-400">Max Streak</p>
-                    </motion.div>
-
-                    {/* Active Days */}
-                    <motion.div
-                        className="card-glass p-6 text-center"
-                        whileHover={{ scale: 1.05 }}
-                        transition={{ type: "spring", stiffness: 300 }}
-                    >
-                        <Calendar className="w-8 h-8 text-purple-500 mx-auto mb-3" />
-                        <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
-                            {calendar?.totalActiveDays || 244}
-                        </h3>
-                        <p className="text-gray-600 dark:text-gray-400">Total Active Days</p>
-                    </motion.div>
-
-                    {/* Reputation */}
-                    <motion.div
-                        className="card-glass p-6 text-center"
-                        whileHover={{ scale: 1.05 }}
-                        transition={{ type: "spring", stiffness: 300 }}
-                    >
-                        <Award className="w-8 h-8 text-blue-500 mx-auto mb-3" />
-                        <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
-                            {'1,514'}
-                        </h3>
-                        <p className="text-gray-600 dark:text-gray-400">Contest Rating</p>
-                    </motion.div>
-                </motion.div>
-
-                {/* Charts Section */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                    {/* Problem Difficulty Distribution */}
-                    <motion.div
-                        className="card-glass p-6"
-                        variants={itemVariants}
-                    >
-                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                            <BarChart3 className="w-6 h-6" />
-                            Problem Distribution
-                        </h3>
-                        <ResponsiveContainer width="100%" height={300}>
-                            <PieChart>
-                                <Pie
-                                    data={statsData}
-                                    cx="50%"
-                                    cy="50%"
-                                    outerRadius={100}
-                                    dataKey="solved"
-                                    label={({ difficulty, solved }) => `${difficulty}: ${solved}`}
-                                >
-                                    {statsData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.color} />
-                                    ))}
-                                </Pie>
-                                <Tooltip />
-                            </PieChart>
-                        </ResponsiveContainer>
-                    </motion.div>
-
-                    {/* Problem Difficulty Bar Chart */}
-                    <motion.div
-                        className="card-glass p-6"
-                        variants={itemVariants}
-                    >
-                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                            <TrendingUp className="w-6 h-6" />
-                            Solved vs Difficulty
-                        </h3>
-                        <ResponsiveContainer width="100%" height={300}>
-                            <BarChart data={statsData}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="difficulty" />
-                                <YAxis />
-                                <Tooltip />
-                                <Bar dataKey="solved" fill="#8884d8" radius={[4, 4, 0, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </motion.div>
+                {/* ── KPI Cards ── */}
+                <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                    gap: '1rem', marginBottom: '1.75rem'
+                }}>
+                    {kpis.map(k => (
+                        <KPICard key={k.label} {...k} />
+                    ))}
                 </div>
 
-                {/* Problem Accuracy Section */}
-                <motion.div
-                    className="card-glass p-6 mb-8"
-                    variants={itemVariants}
-                >
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                        <TrendingUp className="w-6 h-6" />
-                        Problem Solving Accuracy
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {statsData.map((stat, index) => {
-                            const totalSubmissions = userData?.profile?.matchedUser?.submitStats?.totalSubmissionNum?.find(
-                                item => item.difficulty === stat.difficulty
-                            )?.count || stat.solved;
-                            const accuracy = totalSubmissions > 0 ? ((stat.solved / totalSubmissions) * 100).toFixed(1) : 0;
+                {/* ── Problem Distribution + Contest Chart ── */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1rem', marginBottom: '1.75rem' }}>
 
-                            return (
-                                <motion.div
-                                    key={stat.difficulty}
-                                    className="text-center"
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: index * 0.1 }}
-                                >
-                                    <div className="relative w-20 h-20 mx-auto mb-3">
-                                        <svg className="w-20 h-20 transform -rotate-90" viewBox="0 0 36 36">
-                                            <path
-                                                className="text-gray-300 dark:text-gray-600"
-                                                d="M18 2.0845
-                          a 15.9155 15.9155 0 0 1 0 31.831
-                          a 15.9155 15.9155 0 0 1 0 -31.831"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                strokeWidth="2"
-                                            />
-                                            <path
-                                                className="text-purple-500"
-                                                d="M18 2.0845
-                          a 15.9155 15.9155 0 0 1 0 31.831
-                          a 15.9155 15.9155 0 0 1 0 -31.831"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                strokeWidth="2"
-                                                strokeDasharray={`${accuracy}, 100`}
-                                                style={{ color: stat.color }}
-                                            />
-                                        </svg>
-                                        <div className="absolute inset-0 flex items-center justify-center">
-                                            <span className="text-sm font-bold text-gray-900 dark:text-white">
-                                                {accuracy}%
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <h4 className="font-semibold text-gray-900 dark:text-white" style={{ color: stat.color }}>
-                                        {stat.difficulty}
-                                    </h4>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                                        {stat.solved} / {totalSubmissions} solved
-                                    </p>
-                                </motion.div>
-                            );
-                        })}
-                    </div>
-                </motion.div>
+                    {/* Pie chart */}
+                    <Card initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+                        <SectionTitle icon={Target}>Problem Distribution</SectionTitle>
 
-                {/* Skills & Achievements Section */}
-                <motion.div
-                    className="card-glass p-6 mb-8"
-                    variants={itemVariants}
-                >
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                        <Trophy className="w-6 h-6" />
-                        Skills & Achievements
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {/* Dynamic Skill Cards */}
-                        {[
-                            { skill: "Dynamic Programming", level: 68, icon: "🧠", color: "from-blue-500 to-purple-500" },
-                            { skill: "Data Structures", level: 78, icon: "🌳", color: "from-green-500 to-teal-500" },
-                            { skill: "Hash Table", level: 89, icon: "⚡", color: "from-yellow-500 to-orange-500" },
-                            { skill: "Binary Tree", level: 65, icon: "🕸️", color: "from-purple-500 to-pink-500" },
-                            { skill: "Binary Search", level: 90, icon: "🔍", color: "from-indigo-500 to-blue-500" },
-                            { skill: "Recursion", level: 75, icon: "🔄", color: "from-pink-500 to-red-500" }
-                        ].map((item, index) => (
-                            <motion.div
-                                key={item.skill}
-                                className={`p-4 rounded-lg bg-gradient-to-r ${item.color} bg-opacity-10 border border-white/20 dark:border-gray-700/20`}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.1 }}
-                                whileHover={{ scale: 1.05 }}
-                            >
-                                <div className="flex items-center gap-3 mb-2">
-                                    <span className="text-2xl">{item.icon}</span>
-                                    <h4 className="font-semibold text-gray-900 dark:text-white text-sm">
-                                        {item.skill}
-                                    </h4>
-                                </div>
-                                <div className="w-full bg-gray-600 dark:bg-gray-700 rounded-full h-2">
-                                    <motion.div
-                                        className={`h-2  bg-white rounded-full`}
-                                        initial={{ width: 0 }}
-                                        animate={{ width: `${item.level}%` }}
-                                        transition={{ delay: index * 0.1 + 0.5, duration: 1 }}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+                            <ResponsiveContainer width={190} height={190}>
+                                <PieChart>
+                                    <Pie
+                                        data={pieData}
+                                        cx="50%" cy="50%"
+                                        innerRadius={55} outerRadius={85}
+                                        paddingAngle={3}
+                                        dataKey="value"
+                                    >
+                                        {pieData.map((entry, i) => (
+                                            <Cell key={i} fill={entry.color} stroke="none" />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip
+                                        contentStyle={{ background: '#1a1a2a', border: `1px solid ${T.border}`, borderRadius: 8 }}
+                                        itemStyle={{ color: T.text }}
                                     />
-                                </div>
-                                <p className="text-xs text-gray-100 mt-1">
-                                    {item.level}% Mastery
-                                </p>
-                            </motion.div>
-                        ))}
-                    </div>
-                </motion.div>
+                                </PieChart>
+                            </ResponsiveContainer>
 
-                {/* Coding Journey Timeline */}
-                <motion.div
-                    className="card-glass p-6 mb-8"
-                    variants={itemVariants}
-                >
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                        <GitBranch className="w-6 h-6" />
-                        Coding Journey Timeline
-                    </h3>
-                    <div className="space-y-4">
-                        {[
-                            {
-                                date: "July 2025",
-                                title: "Advanced Problem Solving",
-                                description: "Mastering complex algorithms and data structures",
-                                problems: 25,
-                                color: "bg-gradient-to-r from-purple-500 to-pink-500",
-                                icon: "🎯"
-                            },
-                            {
-                                date: "Febrary 2025",
-                                title: "Dynamic Programming Focus",
-                                description: "Deep dive into DP patterns and optimization",
-                                problems: 36,
-                                color: "bg-gradient-to-r from-blue-500 to-purple-500",
-                                icon: "🧠"
-                            },
-                            {
-                                date: "January 2025",
-                                title: "Binary Trees & BST",
-                                description: "Tree traversal and manipulation techniques",
-                                problems: 47,
-                                color: "bg-gradient-to-r from-yellow-500 to-green-500",
-                                icon: "🌳"
-                            },
-                            {
-                                date: "December 2024",
-                                title: "Recursion & Backtracking",
-                                description: "Understanding recursive algorithms and backtracking",
-                                problems: 38,
-                                color: "bg-gradient-to-r from-green-500 to-blue-500",
-                                icon: "🕸️"
-                            },
-                            {
-                                date: "October 2024",
-                                title: "Binary Search ",
-                                description: "Binary search and its applications",
-                                problems: 32,
-                                color: "bg-gradient-to-r from-orange-500 to-purple-500",
-                                icon: "🔎"
-                            },
-                            {
-                                date: "August & September 2024",
-                                title: "Array & String Mastery",
-                                description: "Foundation building with core data structures",
-                                problems: 150,
-                                color: "bg-gradient-to-r from-pink-500 to-yellow-500",
-                                icon: "📊"
-                            }
-                        ].map((milestone, index) => (
-                            <motion.div
-                                key={index}
-                                className="flex items-start gap-4 p-4 rounded-lg bg-white/5 dark:bg-gray-800/5 border border-white/10 dark:border-gray-700/10"
-                                initial={{ opacity: 0, x: -20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: index * 0.1 }}
-                                whileHover={{ scale: 1.02 }}
-                            >
-                                <div className={`w-12 h-12 ${milestone.color} rounded-full flex items-center justify-center text-xl flex-shrink-0`}>
-                                    {milestone.icon}
-                                </div>
-                                <div className="flex-1">
-                                    <div className="flex items-center justify-between mb-1">
-                                        <h4 className="font-semibold text-gray-900 dark:text-white">
-                                            {milestone.title}
-                                        </h4>
-                                        <span className="text-sm text-gray-500 dark:text-gray-400">
-                                            {milestone.date}
-                                        </span>
-                                    </div>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                                        {milestone.description}
-                                    </p>
-                                    <div className="flex items-center gap-2">
-                                        <div className="flex items-center gap-1 text-xs bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 px-2 py-1 rounded-full">
-                                            <Target className="w-3 h-3" />
-                                            {milestone.problems} problems solved
+                            <div style={{ flex: 1, minWidth: 130 }}>
+                                {[
+                                    { label: 'Easy', val: solved.easySolved ?? 0, color: T.green },
+                                    { label: 'Medium', val: solved.mediumSolved ?? 0, color: T.yellow },
+                                    { label: 'Hard', val: solved.hardSolved ?? 0, color: T.red },
+                                ].map(({ label, val, color }) => (
+                                    <div key={label} style={{ marginBottom: 14 }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                                            <span style={{ fontSize: '0.82rem', color, fontWeight: 600 }}>{label}</span>
+                                            <span style={{ fontSize: '0.82rem', color: T.text, fontWeight: 700 }}>{val}</span>
+                                        </div>
+                                        <div style={{ height: 6, borderRadius: 4, background: 'rgba(255,255,255,0.06)' }}>
+                                            <motion.div
+                                                initial={{ width: 0 }}
+                                                animate={{ width: `${totalSolved > 0 ? (val / totalSolved) * 100 : 0}%` }}
+                                                transition={{ delay: 0.5, duration: 1, ease: 'easeOut' }}
+                                                style={{ height: '100%', borderRadius: 4, background: color }}
+                                            />
                                         </div>
                                     </div>
+                                ))}
+                                <div style={{
+                                    marginTop: 18, borderTop: `1px solid ${T.border}`, paddingTop: 12,
+                                    display: 'flex', justifyContent: 'space-between',
+                                }}>
+                                    <span style={{ fontSize: '0.8rem', color: T.muted }}>Total</span>
+                                    <span style={{ fontSize: '1rem', fontWeight: 800, color: T.orange }}>
+                                        {solved.solvedProblem?.toLocaleString() ?? '—'}
+                                    </span>
                                 </div>
-                            </motion.div>
-                        ))}
-                    </div>
-                </motion.div>
+                            </div>
+                        </div>
+                    </Card>
 
-                {/* Dynamic Problem Categories */}
-                <motion.div
-                    className="card-glass p-6 mb-8"
-                    variants={itemVariants}
-                >
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                        <Code className="w-6 h-6" />
-                        Problem Categories Mastered
-                    </h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {[
-                            { category: "Arrays", count: 202, icon: "📊", difficulty: "Easy" },
-                            { category: "Linked Lists", count: 9, icon: "🔗", difficulty: "Easy" },
-                            { category: "Binary Trees", count: 38, icon: "🌳", difficulty: "Medium" },
-                            { category: "Dynamic Programming", count: 44, icon: "🧠", difficulty: "Hard" },
-                            { category: "Graphs", count: 18, icon: "🕸️", difficulty: "Hard" },
-                            { category: "Hash Tables", count: 71, icon: "🗂️", difficulty: "Medium" },
-                            { category: "DFS", count: 46, icon: "📈", difficulty: "Medium" },
-                            { category: "Stacks & Queues", count: 23, icon: "📚", difficulty: "Easy" },
-                            { category: "Sorting", count: 40, icon: "🔄", difficulty: "Easy" }
-                        ].map((category, index) => (
-                            <motion.div
-                                key={category.category}
-                                className="p-4 rounded-lg bg-gradient-to-br from-white/10 to-white/5 dark:from-gray-800/10 dark:to-gray-800/5 border border-white/20 dark:border-gray-700/20 text-center"
-                                initial={{ opacity: 0, scale: 0.8 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                transition={{ delay: index * 0.1 }}
-                                whileHover={{
-                                    scale: 1.05,
-                                    boxShadow: "0 10px 30px rgba(139, 92, 246, 0.3)"
-                                }}
-                            >
-                                <div className="text-3xl mb-2">{category.icon}</div>
-                                <h4 className="font-semibold text-gray-900 dark:text-white text-sm mb-1">
-                                    {category.category}
-                                </h4>
-                                <p className="text-lg font-bold text-purple-600 dark:text-purple-400">
-                                    {category.count}
-                                </p>
-                                <span className={`text-xs px-2 py-1 rounded-full ${category.difficulty === 'Easy' ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400' :
-                                    category.difficulty === 'Medium' ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400' :
-                                        'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400'
-                                    }`}>
-                                    {category.difficulty}
+                    {/* Contest rating line chart */}
+                    <Card initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
+                        <SectionTitle icon={TrendingUp}>
+                            Contest Rating
+                            {contestData.contestRating && (
+                                <span style={{ marginLeft: 8, color: T.orange, fontSize: '0.95rem', fontWeight: 800 }}>
+                                    {Math.round(contestData.contestRating)}
                                 </span>
-                            </motion.div>
-                        ))}
-                    </div>
-                </motion.div>
+                            )}
+                        </SectionTitle>
 
-                {/* Interactive Achievement Badges */}
-                <motion.div
-                    className="card-glass p-6"
-                    variants={itemVariants}
+                        <div style={{ fontSize: '0.78rem', color: T.muted, marginBottom: 12, display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                            {contestData.contestAttend !== undefined && (
+                                <span>🎯 Contests: <b style={{ color: T.text }}>{contestData.contestAttend}</b></span>
+                            )}
+                            {contestData.contestGlobalRanking && (
+                                <span>🌍 Global: <b style={{ color: T.text }}>#{contestData.contestGlobalRanking?.toLocaleString()}</b></span>
+                            )}
+                            {contestData.contestTopPercentage && (
+                                <span>📊 Top <b style={{ color: T.orange }}>{contestData.contestTopPercentage}%</b></span>
+                            )}
+                        </div>
+
+                        <ResponsiveContainer width="100%" height={200}>
+                            <LineChart data={contestHistory} margin={{ top: 5, right: 10, bottom: 5, left: -10 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                                <XAxis dataKey="title" hide />
+                                <YAxis
+                                    domain={['auto', 'auto']}
+                                    tick={{ fill: T.muted, fontSize: 11 }}
+                                    width={45}
+                                />
+                                <Tooltip content={<ContestTooltip />} />
+                                <Line
+                                    type="monotone"
+                                    dataKey="rating"
+                                    stroke={T.orange}
+                                    strokeWidth={2}
+                                    dot={false}
+                                    activeDot={{ r: 5, fill: T.orange, stroke: '#000', strokeWidth: 2 }}
+                                />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </Card>
+                </div>
+
+                {/* ── Badges ── */}
+                {badges.length > 0 && (
+                    <Card
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3 }}
+                        style={{ marginBottom: '1.75rem' }}
+                    >
+                        <SectionTitle icon={Award}>
+                            Badges ({badgesData.badgesCount ?? badges.length})
+                        </SectionTitle>
+
+                        <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))',
+                            gap: '0.75rem',
+                            maxHeight: 340,
+                            overflowY: 'auto',
+                            paddingRight: 4,
+                        }}>
+                            {badges.map((badge, i) => (
+                                <motion.div
+                                    key={badge.id}
+                                    initial={{ opacity: 0, scale: 0.85 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ delay: 0.05 * Math.min(i, 10) }}
+                                    whileHover={{ scale: 1.06 }}
+                                    style={{
+                                        background: 'rgba(255,161,22,0.06)',
+                                        border: `1px solid ${T.border}`,
+                                        borderRadius: 12, padding: '0.75rem 0.5rem',
+                                        textAlign: 'center', cursor: 'default',
+                                    }}
+                                >
+                                    <img
+                                        src={
+                                            badge.icon?.startsWith('http')
+                                                ? badge.icon
+                                                : `https://leetcode.com${badge.icon}`
+                                        }
+                                        alt={badge.displayName}
+                                        style={{ width: 44, height: 44, objectFit: 'contain', marginBottom: 6 }}
+                                        onError={e => { e.target.style.display = 'none'; }}
+                                    />
+                                    <div style={{ fontSize: '0.65rem', fontWeight: 600, color: T.text, lineHeight: 1.3, marginBottom: 3 }}>
+                                        {badge.displayName}
+                                    </div>
+                                    <div style={{ fontSize: '0.58rem', color: T.muted }}>
+                                        {badge.creationDate}
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </div>
+                    </Card>
+                )}
+
+                {/* ── Last 10 Submissions ── */}
+                <Card
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.35 }}
                 >
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                        <Award className="w-6 h-6" />
-                        Achievement Badges
-                    </h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {[
-                            {
-                                title: "Problem Solver",
-                                description: "Solved 300+ problems",
-                                icon: "🥇",
-                                unlocked: true,
-                                gradient: "from-pink-500 to-red-600",
-                            },
-                            {
-                                title: "Streak Master",
-                                description: "80+ day solving streak",
-                                icon: "🧩",
-                                unlocked: true,
-                                gradient: "from-cyan-400 to-blue-600",
-                            },
-                            {
-                                title: "100 Days Badge in 2025",
-                                description: "Solving 100 days in 2025",
-                                icon: "🚀",
-                                unlocked: true,
-                                gradient: "from-green-400 to-teal-600",
-                            },
-                            {
-                                title: "50 Days Badge in 2025",
-                                description: "Solving 50 days in 2025",
-                                icon: "🛡️",
-                                unlocked: true,
-                                gradient: "from-yellow-400 to-yellow-600",
-                            },
-                            {
-                                title: "100 Days Badge in 2024",
-                                description: "Solving 100 days in 2024",
-                                icon: "💡",
-                                unlocked: true,
-                                gradient: "from-purple-400 to-indigo-600",
-                            },
-                            {
-                                title: "50 Days Badge in 2024",
-                                description: "Solving 50 days in 2024",
-                                icon: "📅",
-                                unlocked: true,
-                                gradient: "from-red-400 to-pink-600",
-                            },
-                            {
-                                title: "DCC March 2025",
-                                description: "Solved problem of the day whole March,2025",
-                                icon: "🏆",
-                                unlocked: true,
-                                gradient: "from-orange-400 to-amber-600",
-                            },
-                            {
-                                title: "DCC Feb 2025",
-                                description: "Solved problem of the day whole February,2025",
-                                icon: "🎖️",
-                                unlocked: true,
-                                gradient: "from-sky-400 to-blue-600",
-                            },
-                            {
-                                title: "DCC August 2024",
-                                description: "Solved problem of the day whole August,2024",
-                                icon: "🔔",
-                                unlocked: true,
-                                gradient: "from-lime-400 to-green-600",
-                            },
-                        ].map((badge, index) => (
-                            <motion.div
-                                key={badge.title}
-                                className={`p-4 rounded-lg text-center ${badge.unlocked
-                                    ? `bg-gradient-to-br ${badge.gradient} text-white shadow-lg`
-                                    : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
-                                    }`}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.1 }}
-                                whileHover={{
-                                    scale: badge.unlocked ? 1.05 : 1.02,
-                                    rotate: badge.unlocked ? 5 : 0
-                                }}
-                            >
-                                <div className="text-3xl mb-2">{badge.icon}</div>
-                                <h4 className="font-semibold text-sm mb-1">{badge.title}</h4>
-                                <p className="text-xs opacity-80">{badge.description}</p>
-                                {!badge.unlocked && (
-                                    <div className="mt-2 text-xs opacity-60">🔒 Locked</div>
-                                )}
-                            </motion.div>
-                        ))}
-                    </div>
-                </motion.div>
+                    <SectionTitle icon={Clock}>Last 10 Submissions</SectionTitle>
+
+                    {submissions.length === 0 ? (
+                        <p style={{ color: T.muted, fontSize: '0.85rem' }}>No submission data available.</p>
+                    ) : (
+                        <div style={{ overflowX: 'auto' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.84rem' }}>
+                                <thead>
+                                    <tr style={{ borderBottom: `1px solid ${T.border}` }}>
+                                        {['#', 'Problem', 'Status', 'Language', 'Date'].map(h => (
+                                            <th key={h} style={{
+                                                padding: '8px 10px', textAlign: 'left',
+                                                color: T.muted, fontWeight: 600, fontSize: '0.75rem',
+                                                whiteSpace: 'nowrap',
+                                            }}>{h}</th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {submissions.map((s, i) => (
+                                        <motion.tr
+                                            key={s.id ?? i}
+                                            initial={{ opacity: 0, x: -10 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ delay: 0.04 * i }}
+                                            style={{ borderBottom: `1px solid rgba(255,255,255,0.04)` }}
+                                        >
+                                            <td style={{ padding: '10px 10px', color: T.muted, fontWeight: 600 }}>{i + 1}</td>
+                                            <td style={{ padding: '10px 10px' }}>
+                                                <a
+                                                    href={`https://leetcode.com/problems/${s.titleSlug ?? ''}`}
+                                                    target="_blank" rel="noreferrer"
+                                                    style={{
+                                                        color: T.text, textDecoration: 'none', fontWeight: 600,
+                                                        display: 'flex', alignItems: 'center', gap: 5,
+                                                    }}
+                                                    onMouseEnter={e => e.currentTarget.style.color = T.orange}
+                                                    onMouseLeave={e => e.currentTarget.style.color = T.text}
+                                                >
+                                                    {s.title ?? s.titleSlug}
+                                                    <ExternalLink size={11} style={{ opacity: 0.5 }} />
+                                                </a>
+                                            </td>
+                                            <td style={{ padding: '10px 10px' }}>
+                                                <span style={{
+                                                    display: 'inline-flex', alignItems: 'center', gap: 4,
+                                                    padding: '2px 8px', borderRadius: 6,
+                                                    background: s.statusDisplay === 'Accepted'
+                                                        ? 'rgba(0,184,163,0.15)' : 'rgba(239,71,67,0.15)',
+                                                    color: s.statusDisplay === 'Accepted' ? T.green : T.red,
+                                                    fontSize: '0.75rem', fontWeight: 600,
+                                                }}>
+                                                    {s.statusDisplay === 'Accepted'
+                                                        ? <CheckCircle size={11} />
+                                                        : null}
+                                                    {s.statusDisplay ?? 'Submitted'}
+                                                </span>
+                                            </td>
+                                            <td style={{ padding: '10px 10px', color: T.muted, fontSize: '0.78rem' }}>
+                                                {s.lang ?? s.langName ?? '—'}
+                                            </td>
+                                            <td style={{ padding: '10px 10px', color: T.muted, fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
+                                                {fmtTime(s.timestamp)}
+                                            </td>
+                                        </motion.tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </Card>
+
             </div>
-        </motion.div>
+        </div>
     );
 };
 
