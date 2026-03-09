@@ -10,25 +10,46 @@ import {
     ResponsiveContainer, PieChart, Pie, Cell, Legend
 } from 'recharts';
 import leetcodeApi from './leetcodeApi';
+import { useTheme } from '../contexts/ThemeContext';
 
-// ─── Theme tokens ────────────────────────────────────────────────────────────
-const T = {
-    bg: '#0d0d0f',
-    surface: 'rgba(255,255,255,0.04)',
-    surfaceHover: 'rgba(255,161,22,0.08)',
-    border: 'rgba(255,255,255,0.07)',
-    borderAccent: 'rgba(255,161,22,0.35)',
-    orange: '#ffa116',
-    orangeGlow: 'rgba(255,161,22,0.25)',
-    green: '#00b8a3',
-    yellow: '#ffc01e',
-    red: '#ef4743',
-    text: '#e8e8e8',
-    muted: '#8a8a9f',
-};
+// ─── Theme tokens ──────────────────────────────────────────────────────────────────────────────
+function getTheme(isDark) {
+    return isDark ? {
+        bg: '#0d0d0f',
+        surface: 'rgba(255,255,255,0.04)',
+        surfaceHover: 'rgba(255,161,22,0.08)',
+        border: 'rgba(255,255,255,0.07)',
+        borderAccent: 'rgba(255,161,22,0.35)',
+        orange: '#ffa116',
+        orangeGlow: 'rgba(255,161,22,0.25)',
+        green: '#00b8a3',
+        yellow: '#ffc01e',
+        red: '#ef4743',
+        text: '#e8e8e8',
+        muted: '#8a8a9f',
+        tooltipBg: '#1a1a2a',
+        gridStroke: 'rgba(255,255,255,0.05)',
+    } : {
+        bg: '#fafafa',
+        surface: 'rgba(0,0,0,0.03)',
+        surfaceHover: 'rgba(255,161,22,0.06)',
+        border: 'rgba(0,0,0,0.09)',
+        borderAccent: 'rgba(255,161,22,0.4)',
+        orange: '#e08800',
+        orangeGlow: 'rgba(255,161,22,0.12)',
+        green: '#007a6e',
+        yellow: '#b8860b',
+        red: '#cc2828',
+        text: '#111111',
+        muted: '#6b7280',
+        tooltipBg: '#ffffff',
+        gridStroke: 'rgba(0,0,0,0.06)',
+    };
+}
 
 // ─── Difficulty colours ───────────────────────────────────────────────────────
-const DC = { Easy: T.green, Medium: T.yellow, Hard: T.red };
+// This will be defined inside the component where T is available
+// const DC = { Easy: T.green, Medium: T.yellow, Hard: T.red };
 
 // ─── Helper: format unix timestamp ───────────────────────────────────────────
 function fmtTime(ts) {
@@ -37,9 +58,9 @@ function fmtTime(ts) {
     return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' });
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+// ─── Sub-components ─────────────────────────────────────────────────────────────────────────────
 
-function Card({ children, style, className = '', ...props }) {
+function Card({ T, children, style, className = '', ...props }) {
     return (
         <motion.div
             style={{
@@ -48,6 +69,7 @@ function Card({ children, style, className = '', ...props }) {
                 borderRadius: 16,
                 padding: '1.5rem',
                 backdropFilter: 'blur(12px)',
+                transition: 'background 0.35s ease, border-color 0.35s ease',
                 ...style,
             }}
             className={className}
@@ -58,7 +80,7 @@ function Card({ children, style, className = '', ...props }) {
     );
 }
 
-function SectionTitle({ icon: Icon, children }) {
+function SectionTitle({ T, icon: Icon, children }) {
     return (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '1.25rem' }}>
             <Icon size={18} style={{ color: T.orange }} />
@@ -69,7 +91,8 @@ function SectionTitle({ icon: Icon, children }) {
     );
 }
 
-function KPICard({ icon: Icon, value, label, color = T.orange, delay = 0 }) {
+function KPICard({ T, icon: Icon, value, label, color, delay = 0 }) {
+    const c = color ?? T.orange;
     return (
         <motion.div
             initial={{ opacity: 0, y: 24 }}
@@ -83,16 +106,16 @@ function KPICard({ icon: Icon, value, label, color = T.orange, delay = 0 }) {
                 padding: '1.5rem',
                 textAlign: 'center',
                 cursor: 'default',
-                transition: 'border-color 0.2s',
+                transition: 'border-color 0.2s, background 0.35s ease',
             }}
         >
             <div style={{
                 width: 44, height: 44, borderRadius: 12,
-                background: `${color}22`,
+                background: `${c}22`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 margin: '0 auto 0.75rem',
             }}>
-                <Icon size={20} style={{ color }} />
+                <Icon size={20} style={{ color: c }} />
             </div>
             <div style={{ fontSize: '1.75rem', fontWeight: 800, color: T.text, lineHeight: 1 }}>{value}</div>
             <div style={{ fontSize: '0.8rem', color: T.muted, marginTop: 6 }}>{label}</div>
@@ -100,13 +123,13 @@ function KPICard({ icon: Icon, value, label, color = T.orange, delay = 0 }) {
     );
 }
 
-// ─── Custom tooltip for contest chart ────────────────────────────────────────
-function ContestTooltip({ active, payload }) {
+// ─── Custom tooltip for contest chart ─────────────────────────────────────────────────────────────────────────────
+function ContestTooltip({ T, active, payload }) {
     if (!active || !payload?.length) return null;
     const d = payload[0].payload;
     return (
         <div style={{
-            background: '#1a1a2a', border: `1px solid ${T.borderAccent}`,
+            background: T.tooltipBg, border: `1px solid ${T.borderAccent}`,
             borderRadius: 10, padding: '0.6rem 1rem', fontSize: '0.8rem', color: T.text
         }}>
             <div style={{ fontWeight: 700, color: T.orange, marginBottom: 4 }}>{d.title}</div>
@@ -124,6 +147,9 @@ const LeetCode = () => {
     const [error, setError] = useState(null);
     const [refreshing, setRefreshing] = useState(false);
     const [dataSource, setDataSource] = useState('loading');
+    const { theme } = useTheme();
+    const T = getTheme(theme === 'dark');
+    const DC = { Easy: T.green, Medium: T.yellow, Hard: T.red };
 
     const username = 'vikas_gulia';
 
@@ -249,7 +275,7 @@ const LeetCode = () => {
 
     // ── Render ────────────────────────────────────────────────────────────────
     return (
-        <div style={{ minHeight: '100vh', background: T.bg, paddingTop: 96, paddingBottom: 60 }}>
+        <div style={{ minHeight: '100vh', background: T.bg, paddingTop: 96, paddingBottom: 60, transition: 'background 0.35s ease' }}>
             {/* Ambient glow */}
             <div style={{
                 position: 'fixed', top: 0, left: '50%', transform: 'translateX(-50%)',
@@ -282,7 +308,7 @@ const LeetCode = () => {
 
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, flexWrap: 'wrap' }}>
                         <span style={{
-                            background: 'rgba(255,255,255,0.06)', border: `1px solid ${T.border}`,
+                            background: T.surface, border: `1px solid ${T.border}`,
                             borderRadius: 20, padding: '4px 14px', fontSize: '0.82rem', color: T.muted
                         }}>@{profile.username ?? username}</span>
 
@@ -398,7 +424,7 @@ const LeetCode = () => {
                     gap: '1rem', marginBottom: '1.75rem'
                 }}>
                     {kpis.map(k => (
-                        <KPICard key={k.label} {...k} />
+                        <KPICard T={T} key={k.label} {...k} />
                     ))}
                 </div>
 
@@ -406,8 +432,8 @@ const LeetCode = () => {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1rem', marginBottom: '1.75rem' }}>
 
                     {/* Pie chart */}
-                    <Card initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-                        <SectionTitle icon={Target}>Problem Distribution</SectionTitle>
+                    <Card T={T} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+                        <SectionTitle T={T} icon={Target}>Problem Distribution</SectionTitle>
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
                             <ResponsiveContainer width={190} height={190}>
@@ -424,7 +450,7 @@ const LeetCode = () => {
                                         ))}
                                     </Pie>
                                     <Tooltip
-                                        contentStyle={{ background: '#1a1a2a', border: `1px solid ${T.border}`, borderRadius: 8 }}
+                                        contentStyle={{ background: T.tooltipBg, border: `1px solid ${T.border}`, borderRadius: 8 }}
                                         itemStyle={{ color: T.text }}
                                     />
                                 </PieChart>
@@ -441,7 +467,7 @@ const LeetCode = () => {
                                             <span style={{ fontSize: '0.82rem', color, fontWeight: 600 }}>{label}</span>
                                             <span style={{ fontSize: '0.82rem', color: T.text, fontWeight: 700 }}>{val}</span>
                                         </div>
-                                        <div style={{ height: 6, borderRadius: 4, background: 'rgba(255,255,255,0.06)' }}>
+                                        <div style={{ height: 6, borderRadius: 4, background: T.border }}>
                                             <motion.div
                                                 initial={{ width: 0 }}
                                                 animate={{ width: `${totalSolved > 0 ? (val / totalSolved) * 100 : 0}%` }}
@@ -465,8 +491,8 @@ const LeetCode = () => {
                     </Card>
 
                     {/* Contest rating line chart */}
-                    <Card initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
-                        <SectionTitle icon={TrendingUp}>
+                    <Card T={T} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
+                        <SectionTitle T={T} icon={TrendingUp}>
                             Contest Rating
                             {contestData.contestRating && (
                                 <span style={{ marginLeft: 8, color: T.orange, fontSize: '0.95rem', fontWeight: 800 }}>
@@ -489,21 +515,21 @@ const LeetCode = () => {
 
                         <ResponsiveContainer width="100%" height={200}>
                             <LineChart data={contestHistory} margin={{ top: 5, right: 10, bottom: 5, left: -10 }}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                                <CartesianGrid strokeDasharray="3 3" stroke={T.gridStroke} />
                                 <XAxis dataKey="title" hide />
                                 <YAxis
                                     domain={['auto', 'auto']}
                                     tick={{ fill: T.muted, fontSize: 11 }}
                                     width={45}
                                 />
-                                <Tooltip content={<ContestTooltip />} />
+                                <Tooltip content={<ContestTooltip T={T} />} />
                                 <Line
                                     type="monotone"
                                     dataKey="rating"
                                     stroke={T.orange}
                                     strokeWidth={2}
                                     dot={false}
-                                    activeDot={{ r: 5, fill: T.orange, stroke: '#000', strokeWidth: 2 }}
+                                    activeDot={{ r: 5, fill: T.orange, stroke: T.bg, strokeWidth: 2 }}
                                 />
                             </LineChart>
                         </ResponsiveContainer>
@@ -513,12 +539,13 @@ const LeetCode = () => {
                 {/* ── Badges ── */}
                 {badges.length > 0 && (
                     <Card
+                        T={T}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.3 }}
                         style={{ marginBottom: '1.75rem' }}
                     >
-                        <SectionTitle icon={Award}>
+                        <SectionTitle T={T} icon={Award}>
                             Badges ({badgesData.badgesCount ?? badges.length})
                         </SectionTitle>
 
@@ -538,7 +565,7 @@ const LeetCode = () => {
                                     transition={{ delay: 0.05 * Math.min(i, 10) }}
                                     whileHover={{ scale: 1.06 }}
                                     style={{
-                                        background: 'rgba(255,161,22,0.06)',
+                                        background: T.surfaceHover,
                                         border: `1px solid ${T.border}`,
                                         borderRadius: 12, padding: '0.75rem 0.5rem',
                                         textAlign: 'center', cursor: 'default',
@@ -568,11 +595,12 @@ const LeetCode = () => {
 
                 {/* ── Last 10 Submissions ── */}
                 <Card
+                    T={T}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.35 }}
                 >
-                    <SectionTitle icon={Clock}>Last 10 Submissions</SectionTitle>
+                    <SectionTitle T={T} icon={Clock}>Last 10 Submissions</SectionTitle>
 
                     {submissions.length === 0 ? (
                         <p style={{ color: T.muted, fontSize: '0.85rem' }}>No submission data available.</p>
@@ -597,7 +625,7 @@ const LeetCode = () => {
                                             initial={{ opacity: 0, x: -10 }}
                                             animate={{ opacity: 1, x: 0 }}
                                             transition={{ delay: 0.04 * i }}
-                                            style={{ borderBottom: `1px solid rgba(255,255,255,0.04)` }}
+                                            style={{ borderBottom: `1px solid ${T.border}` }}
                                         >
                                             <td style={{ padding: '10px 10px', color: T.muted, fontWeight: 600 }}>{i + 1}</td>
                                             <td style={{ padding: '10px 10px' }}>
@@ -620,7 +648,7 @@ const LeetCode = () => {
                                                     display: 'inline-flex', alignItems: 'center', gap: 4,
                                                     padding: '2px 8px', borderRadius: 6,
                                                     background: s.statusDisplay === 'Accepted'
-                                                        ? 'rgba(0,184,163,0.15)' : 'rgba(239,71,67,0.15)',
+                                                        ? `${T.green}25` : `${T.red}25`,
                                                     color: s.statusDisplay === 'Accepted' ? T.green : T.red,
                                                     fontSize: '0.75rem', fontWeight: 600,
                                                 }}>

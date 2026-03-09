@@ -9,6 +9,7 @@ import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
     ResponsiveContainer, Cell
 } from 'recharts';
+import { useTheme } from '../contexts/ThemeContext';
 
 const GH_USERNAME = 'VIKASGULIA17';
 const GH_API = 'https://api.github.com';
@@ -49,18 +50,35 @@ const LANG_COLORS = {
     Rust: '#dea584', 'C#': '#178600',
 };
 
-const T = {
-    bg: 'var(--gh-bg, #0d1117)',
-    surface: 'rgba(255,255,255,0.04)',
-    border: 'rgba(255,255,255,0.07)',
-    accent: '#238636',
-    accentHover: '#2ea043',
-    blue: '#58a6ff',
-    text: '#e6edf3',
-    muted: '#8b949e',
-};
+function getTheme(isDark) {
+    return isDark ? {
+        bg: '#0d1117',
+        surface: 'rgba(255,255,255,0.04)',
+        border: 'rgba(255,255,255,0.07)',
+        accent: '#238636',
+        accentHover: '#2ea043',
+        blue: '#58a6ff',
+        text: '#e6edf3',
+        muted: '#8b949e',
+        tooltipBg: '#161b22',
+        gridStroke: 'rgba(255,255,255,0.05)',
+        ambientGlow: 'rgba(35,134,54,0.15)',
+    } : {
+        bg: '#f6f8fa',
+        surface: 'rgba(0,0,0,0.03)',
+        border: 'rgba(0,0,0,0.1)',
+        accent: '#1a7f37',
+        accentHover: '#218843',
+        blue: '#0969da',
+        text: '#1f2328',
+        muted: '#656d76',
+        tooltipBg: '#ffffff',
+        gridStroke: 'rgba(0,0,0,0.06)',
+        ambientGlow: 'rgba(35,134,54,0.08)',
+    };
+}
 
-function Card({ children, style, ...rest }) {
+function Card({ T, children, style, ...rest }) {
     return (
         <motion.div style={{
             background: T.surface,
@@ -72,7 +90,7 @@ function Card({ children, style, ...rest }) {
         </motion.div>
     );
 }
-function STitle({ icon: Icon, children }) {
+function STitle({ T, icon: Icon, children }) {
     return (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '1rem' }}>
             <Icon size={16} style={{ color: T.accent }} />
@@ -81,21 +99,21 @@ function STitle({ icon: Icon, children }) {
     );
 }
 
-const LangBar = ({ name, pct, color }) => (
+const LangBar = ({ T, name, pct, color }) => (
     <div style={{ marginBottom: 10 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
             <span style={{ fontSize: '0.8rem', color: T.text, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ width: 10, height: 10, borderRadius: '50%', background: color || '#58a6ff', display: 'inline-block' }} />
+                <span style={{ width: 10, height: 10, borderRadius: '50%', background: color || T.blue, display: 'inline-block' }} />
                 {name}
             </span>
             <span style={{ fontSize: '0.75rem', color: T.muted }}>{pct.toFixed(1)}%</span>
         </div>
-        <div style={{ height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.08)' }}>
+        <div style={{ height: 4, borderRadius: 2, background: T.border }}>
             <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${pct}%` }}
                 transition={{ duration: 0.8, ease: 'easeOut', delay: 0.2 }}
-                style={{ height: '100%', borderRadius: 2, background: color || '#58a6ff' }}
+                style={{ height: '100%', borderRadius: 2, background: color || T.blue }}
             />
         </div>
     </div>
@@ -106,6 +124,8 @@ export default function GitHub() {
     const [repos, setRepos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const { theme } = useTheme();
+    const T = getTheme(theme === 'dark');
 
     useEffect(() => { load(); }, []);
 
@@ -157,15 +177,15 @@ export default function GitHub() {
     const joinedYear = user ? new Date(user.created_at).getFullYear() : '—';
 
     if (loading) return (
-        <div style={{ minHeight: '100vh', background: '#0d1117', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16 }}>
+        <div style={{ minHeight: '100vh', background: T.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16, transition: 'background 0.35s ease' }}>
             <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                style={{ width: 48, height: 48, borderRadius: '50%', border: '3px solid rgba(255,255,255,0.1)', borderTop: `3px solid ${T.accent}` }} />
+                style={{ width: 48, height: 48, borderRadius: '50%', border: `3px solid ${T.border}`, borderTop: `3px solid ${T.accent}` }} />
             <p style={{ color: T.muted, fontSize: '0.9rem' }}>Fetching GitHub stats…</p>
         </div>
     );
 
     if (error && !user) return (
-        <div style={{ minHeight: '100vh', background: '#0d1117', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ minHeight: '100vh', background: T.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.35s ease' }}>
             <div style={{ textAlign: 'center' }}>
                 <p style={{ color: '#f85149', marginBottom: 16 }}>{error}</p>
                 <button onClick={load} style={{ background: T.accent, color: '#fff', border: 'none', borderRadius: 8, padding: '8px 20px', cursor: 'pointer', fontWeight: 700 }}>Retry</button>
@@ -174,9 +194,9 @@ export default function GitHub() {
     );
 
     return (
-        <div style={{ minHeight: '100vh', background: '#0d1117', paddingTop: 96, paddingBottom: 60 }}>
+        <div style={{ minHeight: '100vh', background: T.bg, paddingTop: 96, paddingBottom: 60, transition: 'background 0.35s ease' }}>
             {/* Ambient */}
-            <div style={{ position: 'fixed', top: 0, left: '50%', transform: 'translateX(-50%)', width: 700, height: 350, borderRadius: '50%', background: 'radial-gradient(ellipse, rgba(35,134,54,0.15) 0%, transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
+            <div style={{ position: 'fixed', top: 0, left: '50%', transform: 'translateX(-50%)', width: 700, height: 350, borderRadius: '50%', background: `radial-gradient(ellipse, ${T.ambientGlow} 0%, transparent 70%)`, pointerEvents: 'none', zIndex: 0 }} />
 
             <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 1.5rem', position: 'relative', zIndex: 1 }}>
                 {/* ── Header ── */}
@@ -191,7 +211,7 @@ export default function GitHub() {
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, flexWrap: 'wrap' }}>
                         <a href={`https://github.com/${GH_USERNAME}`} target="_blank" rel="noreferrer"
-                            style={{ background: 'rgba(255,255,255,0.06)', border: `1px solid ${T.border}`, borderRadius: 20, padding: '4px 14px', fontSize: '0.82rem', color: T.blue, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
+                            style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 20, padding: '4px 14px', fontSize: '0.82rem', color: T.blue, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
                             @{GH_USERNAME} <ExternalLink size={11} />
                         </a>
                         <button onClick={handleRefresh} style={{ background: 'transparent', border: `1px solid ${T.border}`, borderRadius: 8, padding: '4px 10px', cursor: 'pointer', color: T.muted, display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.78rem' }}>
@@ -202,7 +222,7 @@ export default function GitHub() {
 
                 {/* ── Profile card ── */}
                 <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-                    style={{ background: 'linear-gradient(135deg,rgba(35,134,54,0.1) 0%,rgba(255,255,255,0.03) 100%)', border: '1px solid rgba(35,134,54,0.3)', borderRadius: 16, padding: '1.75rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+                    style={{ background: `linear-gradient(135deg, ${T.ambientGlow} 0%, ${T.surface} 100%)`, border: `1px solid rgba(35,134,54,0.3)`, borderRadius: 16, padding: '1.75rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap', transition: 'background 0.35s ease' }}>
                     <img src={user?.avatar_url} alt="avatar" style={{ width: 80, height: 80, borderRadius: '50%', border: '3px solid rgba(35,134,54,0.5)' }} />
                     <div style={{ flex: 1, minWidth: 200 }}>
                         <h2 style={{ margin: '0 0 4px', fontSize: '1.4rem', fontWeight: 800, color: T.text }}>{user?.name ?? GH_USERNAME}</h2>
@@ -238,20 +258,20 @@ export default function GitHub() {
 
                 {/* ── Language breakdown + Bar chart ── */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
-                    <Card initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-                        <STitle icon={Code}>Language Breakdown</STitle>
-                        {langList.map(l => <LangBar key={l.name} {...l} />)}
+                    <Card T={T} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+                        <STitle T={T} icon={Code}>Language Breakdown</STitle>
+                        {langList.map(l => <LangBar T={T} key={l.name} {...l} />)}
                     </Card>
 
-                    <Card initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
-                        <STitle icon={GitBranch}>Repos by Language</STitle>
+                    <Card T={T} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
+                        <STitle T={T} icon={GitBranch}>Repos by Language</STitle>
                         <ResponsiveContainer width="100%" height={240}>
                             <BarChart data={langList} margin={{ top: 0, right: 10, bottom: 40, left: -20 }}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                                <CartesianGrid strokeDasharray="3 3" stroke={T.gridStroke} />
                                 <XAxis dataKey="name" tick={{ fill: T.muted, fontSize: 10 }} angle={-35} textAnchor="end" interval={0} />
                                 <YAxis tick={{ fill: T.muted, fontSize: 11 }} />
                                 <Tooltip
-                                    contentStyle={{ background: '#161b22', border: `1px solid ${T.border}`, borderRadius: 8 }}
+                                    contentStyle={{ background: T.tooltipBg, border: `1px solid ${T.border}`, borderRadius: 8 }}
                                     labelStyle={{ color: T.text }} itemStyle={{ color: T.muted }}
                                 />
                                 <Bar dataKey="count" radius={[4, 4, 0, 0]}>
@@ -263,19 +283,19 @@ export default function GitHub() {
                 </div>
 
                 {/* ── GitHub contribution image ── */}
-                <Card initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }} style={{ marginBottom: '1.5rem' }}>
-                    <STitle icon={Calendar}>Contribution Activity</STitle>
+                <Card T={T} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }} style={{ marginBottom: '1.5rem' }}>
+                    <STitle T={T} icon={Calendar}>Contribution Activity</STitle>
                     <img
                         src={`https://ghchart.rshah.org/238636/${GH_USERNAME}`}
                         alt="Contribution chart"
-                        style={{ width: '100%', borderRadius: 8, filter: 'brightness(0.9)' }}
+                        style={{ width: '100%', borderRadius: 8, filter: theme === 'dark' ? 'brightness(0.9)' : 'brightness(1)' }}
                         onError={e => { e.target.style.display = 'none'; }}
                     />
                 </Card>
 
                 {/* ── Top Repos ── */}
-                <Card initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.32 }}>
-                    <STitle icon={Star}>Top Repositories</STitle>
+                <Card T={T} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.32 }}>
+                    <STitle T={T} icon={Star}>Top Repositories</STitle>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: '0.75rem' }}>
                         {topRepos.map((repo, i) => (
                             <motion.a
@@ -285,8 +305,8 @@ export default function GitHub() {
                                 whileHover={{ scale: 1.02, borderColor: 'rgba(35,134,54,0.4)' }}
                                 style={{
                                     display: 'block', padding: '1rem', borderRadius: 10,
-                                    background: 'rgba(255,255,255,0.03)', border: `1px solid ${T.border}`,
-                                    textDecoration: 'none', transition: 'border-color 0.2s',
+                                    background: T.surface, border: `1px solid ${T.border}`,
+                                    textDecoration: 'none', transition: 'border-color 0.2s, background 0.35s ease',
                                 }}
                             >
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
@@ -303,7 +323,7 @@ export default function GitHub() {
                                 <div style={{ display: 'flex', gap: 12, fontSize: '0.72rem', color: T.muted, flexWrap: 'wrap' }}>
                                     {repo.language && (
                                         <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                                            <span style={{ width: 8, height: 8, borderRadius: '50%', background: LANG_COLORS[repo.language] ?? '#8b949e' }} />
+                                            <span style={{ width: 8, height: 8, borderRadius: '50%', background: LANG_COLORS[repo.language] ?? T.muted }} />
                                             {repo.language}
                                         </span>
                                     )}
