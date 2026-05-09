@@ -1,274 +1,227 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Mail, Phone, MapPin, Send, Github, Linkedin, Instagram, MessageCircle } from 'lucide-react';
-import { portfolioData } from '../data/data';
+'use client'
 
-const TELEGRAM_API = 'https://api.telegram.org/bot7556029899:AAG3EogGPdL17WImWlbIT18R5eNU81U9IAA/sendMessage';
-const TELEGRAM_CHAT_ID = 6974520564;
+import { useState, useEffect, useRef } from 'react'
+import { Mail, Phone, MapPin, Send, Github, Linkedin, Instagram, CheckCircle, XCircle } from 'lucide-react'
+import { portfolioData } from '../data/data'
 
-const Contact = () => {
-  const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState(null);
-  const contactRef = useRef(null);
+const TAPI  = 'https://api.telegram.org/bot7556029899:AAG3EogGPdL17WImWlbIT18R5eNU81U9IAA/sendMessage'
+const TCHAT = 6974520564
+
+const SOCIALS = [
+  { icon: Github,    url: portfolioData.personal.github,    label: 'GitHub',    hc: 'var(--text)' },
+  { icon: Linkedin,  url: portfolioData.personal.linkedin,  label: 'LinkedIn',  hc: '#0a66c2'     },
+  { icon: Instagram, url: portfolioData.personal.instagram, label: 'Instagram', hc: '#e1306c'     },
+]
+
+export default function Contact() {
+  const ref = useRef(null)
+  const [visible, setVisible] = useState(false)
+  const [form,    setForm]    = useState({ name: '', email: '', subject: '', message: '' })
+  const [busy,    setBusy]    = useState(false)
+  const [status,  setStatus]  = useState(null)
 
   useEffect(() => {
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) entry.target.classList.add('animate-fade-in-up');
-      });
-    }, { threshold: 0.1 });
+    const obs = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) { setVisible(true); obs.disconnect() } },
+      { threshold: 0.05 }
+    )
+    if (ref.current) obs.observe(ref.current)
+    return () => obs.disconnect()
+  }, [])
 
-    if (contactRef.current) observer.observe(contactRef.current);
-    return () => observer.disconnect();
-  }, []);
+  const onChange = e => setForm({ ...form, [e.target.name]: e.target.value })
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setSubmitStatus(null);
-
-    const { name, email, subject, message } = formData;
-
-    if (name.length < 2 || message.length < 10 || !email.includes('@')) {
-      setSubmitStatus('error');
-      setIsSubmitting(false);
-      return;
+  const onSubmit = async e => {
+    e.preventDefault()
+    setBusy(true); setStatus(null)
+    const { name, email, subject, message } = form
+    if (name.length < 2 || !email.includes('@') || message.length < 10) {
+      setStatus('error'); setBusy(false); return
     }
-
-    const telegramMessage = `📬 New Contact Form Submission:\n👤 Name: ${name}\n📧 Email: ${email}\n📝 Subject: ${subject || 'N/A'}\n💬 Message: ${message}`;
-
+    const text = `📬 Portfolio Contact:\n👤 ${name}\n📧 ${email}\n📝 ${subject || 'N/A'}\n💬 ${message}`
     try {
-      const response = await fetch(TELEGRAM_API, {
+      const r = await fetch(TAPI, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: telegramMessage }),
-      });
-      const result = await response.json();
-
-      if (!response.ok) throw new Error(result.description);
-
-      setSubmitStatus('success');
-      setFormData({ name: '', email: '', subject: '', message: '' });
-    } catch (err) {
-      console.error('Telegram Error:', err);
-      setSubmitStatus('error');
+        body: JSON.stringify({ chat_id: TCHAT, text }),
+      })
+      if (!r.ok) throw new Error()
+      setStatus('success')
+      setForm({ name: '', email: '', subject: '', message: '' })
+    } catch {
+      setStatus('error')
     } finally {
-      setIsSubmitting(false);
-      setTimeout(() => setSubmitStatus(null), 5000);
+      setBusy(false)
+      setTimeout(() => setStatus(null), 5500)
     }
-  };
+  }
+
   return (
-    <section id="contact" className="py-20 bg-white dark:bg-gray-900">
+    <section id="contact" ref={ref} className="py-20" style={{ background: 'var(--bg)' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
         {/* Header */}
-        <div ref={contactRef} className="text-center mb-16 transform translate-y-8 transition-all duration-1000">
-          <div className="flex items-center justify-center space-x-2 mb-4">
-            <div className="w-8 h-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"></div>
-            <h2 className="text-sm font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wide">
-              Get In Touch
-            </h2>
-            <div className="w-8 h-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"></div>
-          </div>
-          
-          <h3 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            Let's <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Connect</span>
-          </h3>
-          
-          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+        <div
+          className="text-center mb-12 transition-all duration-500"
+          style={{ opacity: visible ? 1 : 0, transform: visible ? 'none' : 'translateY(20px)' }}
+        >
+          <span className="section-label">Get In Touch</span>
+          <h2 className="mt-3 text-3xl sm:text-4xl font-bold" style={{ color: 'var(--text)' }}>
+            Let's <span style={{ color: 'var(--accent)' }}>Connect</span>
+          </h2>
+          <p className="mt-2 max-w-xl mx-auto text-sm" style={{ color: 'var(--text-3)' }}>
             Ready to discuss your next project or just want to say hello? I'd love to hear from you.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Contact Information */}
-          <div className="space-y-8">
-            <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-2xl p-8">
-              <h4 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Let's Talk</h4>
-              <p className="text-gray-600 dark:text-gray-300 mb-8">
-                I'm always open to discussing new opportunities, collaborations, or just connecting with fellow developers and data enthusiasts.
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-7">
+
+          {/* Left: info (2/5) */}
+          <div
+            className="lg:col-span-2 flex flex-col gap-4 transition-all duration-500"
+            style={{
+              opacity: visible ? 1 : 0,
+              transform: visible ? 'none' : 'translateX(-20px)',
+              transitionDelay: '0.1s',
+            }}
+          >
+            {/* Contact details */}
+            <div className="card p-6">
+              <h3 className="font-semibold mb-4 text-base" style={{ color: 'var(--text)' }}>Let's Talk</h3>
+              <p className="text-sm leading-relaxed mb-5" style={{ color: 'var(--text-3)' }}>
+                Always open to discussing new opportunities, collaborations, or just connecting with fellow developers.
               </p>
 
-              {/* Contact Details */}
-              <div className="space-y-6">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                    <Mail className="w-6 h-6 text-white" />
+              {[
+                { icon: Mail,   label: 'Email',    val: portfolioData.personal.email,    href: `mailto:${portfolioData.personal.email}` },
+                { icon: Phone,  label: 'Phone',    val: portfolioData.personal.phone,    href: `tel:${portfolioData.personal.phone}` },
+                { icon: MapPin, label: 'Location', val: portfolioData.personal.location, href: null },
+              ].map(({ icon: Icon, label, val, href }) => (
+                <div key={label} className="flex items-center gap-3 mb-3.5">
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{
+                    background: 'var(--accent-a)', border: '1px solid rgba(255,161,22,.2)',
+                  }}>
+                    <Icon size={15} style={{ color: 'var(--accent)' }} />
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900 dark:text-white">Email</p>
-                    <a href={`mailto:${portfolioData.personal.email}`} className="text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors duration-300">
-                      {portfolioData.personal.email}
-                    </a>
+                    <p className="mono text-xs mb-0.5" style={{ color: 'var(--text-3)' }}>{label}</p>
+                    {href ? (
+                      <a href={href} style={{ color: 'var(--teal)', fontSize: '.84rem', textDecoration: 'none' }}
+                        onMouseEnter={e => { e.currentTarget.style.color = 'var(--accent)' }}
+                        onMouseLeave={e => { e.currentTarget.style.color = 'var(--teal)' }}>
+                        {val}
+                      </a>
+                    ) : (
+                      <p className="text-sm" style={{ color: 'var(--text-2)' }}>{val}</p>
+                    )}
                   </div>
                 </div>
+              ))}
+            </div>
 
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                    <Phone className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900 dark:text-white">Phone</p>
-                    <a href={`tel:${portfolioData.personal.phone}`} className="text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors duration-300">
-                      {portfolioData.personal.phone}
-                    </a>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                    <MapPin className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900 dark:text-white">Location</p>
-                    <p className="text-gray-600 dark:text-gray-300">{portfolioData.personal.location}</p>
-                  </div>
-                </div>
+            {/* Socials */}
+            <div className="card p-5">
+              <p className="mono text-xs uppercase tracking-widest mb-3" style={{ color: 'var(--text-3)' }}>Follow me</p>
+              <div className="flex gap-2.5">
+                {SOCIALS.map(({ icon: Icon, url, label, hc }) => (
+                  <a
+                    key={label} href={url} target="_blank" rel="noopener noreferrer" title={label}
+                    className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200"
+                    style={{
+                      background: 'var(--elevated)', border: '1px solid var(--border)',
+                      color: 'var(--text-3)', textDecoration: 'none',
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.borderColor = hc
+                      e.currentTarget.style.color = hc
+                      e.currentTarget.style.transform = 'translateY(-2px)'
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.borderColor = 'var(--border)'
+                      e.currentTarget.style.color = 'var(--text-3)'
+                      e.currentTarget.style.transform = 'none'
+                    }}
+                  >
+                    <Icon size={17} />
+                  </a>
+                ))}
               </div>
             </div>
 
-            {/* Social Links */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg">
-              <h5 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Follow Me</h5>
-              <div className="flex space-x-4">
-                <a
-                  href={portfolioData.personal.github}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-12 h-12 bg-gray-900 dark:bg-gray-700 rounded-full flex items-center justify-center text-white hover:bg-gray-800 dark:hover:bg-gray-600 transition-colors duration-300 shadow-lg hover:shadow-xl"
-                >
-                  <Github className="w-6 h-6" />
-                </a>
-                <a
-                  href={portfolioData.personal.linkedin}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white hover:bg-blue-700 transition-colors duration-300 shadow-lg hover:shadow-xl"
-                >
-                  <Linkedin className="w-6 h-6" />
-                </a>
-                <a
-                  href={portfolioData.personal.instagram}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-12 h-12 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full flex items-center justify-center text-white hover:from-pink-600 hover:to-purple-600 transition-colors duration-300 shadow-lg hover:shadow-xl"
-                >
-                  <Instagram className="w-6 h-6" />
-                </a>
+            {/* Availability */}
+            <div className="rounded-xl px-5 py-4 flex items-center gap-3" style={{
+              background: 'var(--surface)', border: '1px solid var(--border)', borderLeft: '3px solid var(--green)',
+            }}>
+              <div className="w-2.5 h-2.5 rounded-full flex-shrink-0 anim-pulse-dot" style={{ background: 'var(--green)' }} />
+              <div>
+                <p className="font-semibold text-sm" style={{ color: 'var(--green)' }}>Available for Projects</p>
+                <p className="text-xs mt-0.5" style={{ color: 'var(--text-3)' }}>Accepting freelance & full-time</p>
               </div>
             </div>
-
-            {/* Quick Response */}
-            <div className= "bg-gradient-to-r from-purple-500 to-pink-500 dark:bg-gradient-to-r dark:from-purple-600 dark:to-pink-600 rounded-xl p-6 text-white">              
-              <div className="flex items-center space-x-3 mb-3">
-                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                <h4 className="text-lg font-semibold dark:text-white">Available for Projects</h4>
-              </div>
-              <p className="text-gray-600 dark:text-gray-300 text-slate-200">
-                I'm currently accepting new freelance projects and full-time opportunities.
-              </p>
-            </div>
-          
           </div>
 
-          {/* Contact Form */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-lg ">
-            <h4 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Send Message</h4>
-            
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="relative">
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 peer placeholder-transparent"
-                    placeholder="Your Name"
-                  />
-                  <label className="absolute left-4 -top-2.5 bg-white dark:bg-gray-800 px-2 text-sm text-gray-600 dark:text-gray-400 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-3 peer-focus:-top-2.5 peer-focus:text-purple-600 peer-focus:text-sm">
-                    Your Name
-                  </label>
-                </div>
+          {/* Right: form (3/5) */}
+          <div
+            className="lg:col-span-3 card p-6 sm:p-8 transition-all duration-500"
+            style={{
+              opacity: visible ? 1 : 0,
+              transform: visible ? 'none' : 'translateX(20px)',
+              transitionDelay: '0.2s',
+            }}
+          >
+            <h3 className="font-semibold mb-6 text-base" style={{ color: 'var(--text)' }}>Send a Message</h3>
 
-                <div className="relative">
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 peer placeholder-transparent"
-                    placeholder="Your Email"
-                  />
-                  <label className="absolute left-4 -top-2.5 bg-white dark:bg-gray-800 px-2 text-sm text-gray-600 dark:text-gray-400 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-3 peer-focus:-top-2.5 peer-focus:text-purple-600 peer-focus:text-sm">
-                    Your Email
-                  </label>
+            <form onSubmit={onSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="mono text-xs mb-1.5 block" style={{ color: 'var(--text-3)' }}>Name *</label>
+                  <input className="lc-input" type="text" name="name" value={form.name}
+                    onChange={onChange} placeholder="Your name" required />
+                </div>
+                <div>
+                  <label className="mono text-xs mb-1.5 block" style={{ color: 'var(--text-3)' }}>Email *</label>
+                  <input className="lc-input" type="email" name="email" value={form.email}
+                    onChange={onChange} placeholder="your@email.com" required />
                 </div>
               </div>
 
-              <div className="relative">
-                <input
-                  type="text"
-                  name="subject"
-                  value={formData.subject}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 peer placeholder-transparent"
-                  placeholder="Subject"
-                />
-                <label className="absolute left-4 -top-2.5 bg-white dark:bg-gray-800 px-2 text-sm text-gray-600 dark:text-gray-400 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-3 peer-focus:-top-2.5 peer-focus:text-purple-600 peer-focus:text-sm">
-                  Subject
-                </label>
+              <div>
+                <label className="mono text-xs mb-1.5 block" style={{ color: 'var(--text-3)' }}>Subject</label>
+                <input className="lc-input" type="text" name="subject" value={form.subject}
+                  onChange={onChange} placeholder="What's this about?" />
               </div>
 
-              <div className="relative">
-                <textarea
-                  name="message"
-                  value={formData.message}
-                  onChange={handleChange}
-                  required
-                  rows={6}
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 peer placeholder-transparent resize-none"
-                  placeholder="Your Message"
-                />
-                <label className="absolute left-4 -top-2.5 bg-white dark:bg-gray-800 px-2 text-sm text-gray-600 dark:text-gray-400 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-3 peer-focus:-top-2.5 peer-focus:text-purple-600 peer-focus:text-sm">
-                  Your Message
-                </label>
+              <div>
+                <label className="mono text-xs mb-1.5 block" style={{ color: 'var(--text-3)' }}>Message *</label>
+                <textarea className="lc-input" name="message" value={form.message}
+                  onChange={onChange} placeholder="Tell me about your project..." rows={5}
+                  required style={{ resize: 'vertical', minHeight: 110 }} />
               </div>
 
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-lg hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
-              >
-                {isSubmitting ? (
+              <button type="submit" disabled={busy} className="btn-primary w-full justify-center"
+                style={{ opacity: busy ? .65 : 1, cursor: busy ? 'not-allowed' : 'pointer' }}>
+                {busy ? (
                   <>
-                    <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full"></div>
-                    <span>Sending...</span>
+                    <span className="w-4 h-4 rounded-full anim-spin border-2 border-black/30 border-t-black flex-shrink-0" />
+                    Sending…
                   </>
                 ) : (
-                  <>
-                    <Send className="w-5 h-5" />
-                    <span>Send Message</span>
-                  </>
+                  <><Send size={15} /> Send Message</>
                 )}
               </button>
 
-              {/* Status Messages */}
-              {submitStatus === 'success' && (
-                <div className="p-4 bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200 rounded-lg">
-                  ✅ Message sent successfully! I'll get back to you soon.
+              {status === 'success' && (
+                <div className="flex items-center gap-2.5 rounded-lg p-3 text-sm" style={{
+                  background: 'rgba(74,222,128,.1)', border: '1px solid rgba(74,222,128,.25)', color: 'var(--green)',
+                }}>
+                  <CheckCircle size={16} /> Message sent! I'll reply soon.
                 </div>
               )}
-              
-              {submitStatus === 'error' && (
-                <div className="p-4 bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 rounded-lg">
-                  ❌ Failed to send message. Please try again or contact me directly.
+              {status === 'error' && (
+                <div className="flex items-center gap-2.5 rounded-lg p-3 text-sm" style={{
+                  background: 'rgba(248,113,113,.1)', border: '1px solid rgba(248,113,113,.25)', color: 'var(--red)',
+                }}>
+                  <XCircle size={16} /> Failed to send. Please email me directly.
                 </div>
               )}
             </form>
@@ -276,7 +229,5 @@ const Contact = () => {
         </div>
       </div>
     </section>
-  );
-};
-
-export default Contact;
+  )
+}

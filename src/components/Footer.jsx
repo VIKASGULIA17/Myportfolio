@@ -1,141 +1,136 @@
 'use client'
 
-import React from 'react'
-import { Heart, Github, Linkedin, Instagram, ArrowUp } from 'lucide-react'
+import { Code2, Github, Linkedin, Instagram, ArrowUp, Heart, Mail } from 'lucide-react'
 import { portfolioData } from '../data/data'
 
-const Footer = () => {
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
+const LINKS = [
+  { name: 'About',    href: '#about'    },
+  { name: 'Projects', href: '#projects' },
+  { name: 'Skills',   href: '#skills'   },
+  { name: 'Blog',     href: '#blog'     },
+  { name: 'Contact',  href: '#contact'  },
+]
 
-  const currentYear = new Date().getFullYear()
+const SOCIALS = [
+  { icon: Github,    url: portfolioData.personal.github,    label: 'GitHub'    },
+  { icon: Linkedin,  url: portfolioData.personal.linkedin,  label: 'LinkedIn'  },
+  { icon: Instagram, url: portfolioData.personal.instagram, label: 'Instagram' },
+]
 
+const scroll = (h) => document.querySelector(h)?.scrollIntoView({ behavior: 'smooth' })
+
+export default function Footer() {
   return (
-    <footer className="bg-gray-900 dark:bg-black text-white">
-      {/* Main Footer */}
+    <footer style={{ background: 'var(--surface)', borderTop: '1px solid var(--border)' }}>
+
+      {/* Main */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* Brand Section */}
-          <div className="md:col-span-2">
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                {portfolioData.personal.name}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+
+          {/* Brand */}
+          <div className="sm:col-span-2">
+            <div className="flex items-center gap-2.5 mb-4">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ background: 'var(--accent)' }}>
+                <Code2 size={15} color="#111" strokeWidth={2.5} />
               </div>
+              <span className="font-bold text-base mono" style={{ color: 'var(--text)' }}>
+                vikas<span style={{ color: 'var(--accent)' }}>.dev</span>
+              </span>
             </div>
-            
-            <p className="text-gray-300 mb-6 max-w-md">
+            <p className="text-sm leading-relaxed mb-5 max-w-xs" style={{ color: 'var(--text-3)' }}>
               {portfolioData.personal.tagline}
             </p>
-
-            {/* Social Links */}
-            <div className="flex space-x-4">
-              <a
-                href={portfolioData.personal.github}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center text-gray-300 hover:text-white hover:bg-purple-600 transition-all duration-300 transform hover:scale-110"
-              >
-                <Github className="w-5 h-5" />
-              </a>
-              <a
-                href={portfolioData.personal.linkedin}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center text-gray-300 hover:text-white hover:bg-purple-600 transition-all duration-300 transform hover:scale-110"
-              >
-                <Linkedin className="w-5 h-5" />
-              </a>
-              <a
-                href={portfolioData.personal.instagram}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center text-gray-300 hover:text-white hover:bg-purple-600 transition-all duration-300 transform hover:scale-110"
-              >
-                <Instagram className="w-5 h-5" />
-              </a>
+            <div className="flex gap-2.5">
+              {SOCIALS.map(({ icon: Icon, url, label }) => (
+                <a
+                  key={label} href={url} target="_blank" rel="noopener noreferrer" title={label}
+                  className="w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-200"
+                  style={{ background: 'var(--elevated)', border: '1px solid var(--border)', color: 'var(--text-3)', textDecoration: 'none' }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.borderColor = 'var(--accent)'
+                    e.currentTarget.style.color = 'var(--accent)'
+                    e.currentTarget.style.transform = 'translateY(-2px)'
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.borderColor = 'var(--border)'
+                    e.currentTarget.style.color = 'var(--text-3)'
+                    e.currentTarget.style.transform = 'none'
+                  }}
+                >
+                  <Icon size={16} />
+                </a>
+              ))}
             </div>
           </div>
 
-          {/* Quick Links */}
+          {/* Navigation */}
           <div>
-            <h4 className="text-lg font-semibold mb-4">Quick Links</h4>
-            <ul className="space-y-2">
-              {[
-                { name: 'About', href: '#about' },
-                { name: 'Projects', href: '#projects' },
-                { name: 'Skills', href: '#skills' },
-                { name: 'Blog', href: '#blog' },
-                { name: 'Contact', href: '#contact' }
-              ].map((link) => (
-                <li key={link.name}>
+            <h4 className="mono text-xs uppercase tracking-widest mb-4" style={{ color: 'var(--text-3)' }}>Navigation</h4>
+            <ul className="space-y-2.5">
+              {LINKS.map(l => (
+                <li key={l.name}>
                   <button
-                    onClick={() => {
-                      const element = document.querySelector(link.href)
-                      if (element) {
-                        element.scrollIntoView({ behavior: 'smooth' })
-                      }
-                    }}
-                    className="text-gray-300 hover:text-purple-400 transition-colors duration-200 cursor-pointer focus:outline-none"
+                    onClick={() => scroll(l.href)}
+                    className="text-sm cursor-pointer border-none bg-transparent p-0 transition-colors duration-200"
+                    style={{ color: 'var(--text-3)' }}
+                    onMouseEnter={e => { e.currentTarget.style.color = 'var(--accent)' }}
+                    onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-3)' }}
                   >
-                    {link.name}
+                    {l.name}
                   </button>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Contact Info */}
+          {/* Contact */}
           <div>
-            <h4 className="text-lg font-semibold mb-4">Get In Touch</h4>
-            <ul className="space-y-2 text-gray-300">
-              <li>
-                <a 
-                  href={`mailto:${portfolioData.personal.email}`}
-                  className="hover:text-purple-400 transition-colors duration-200"
-                >
-                  {portfolioData.personal.email}
-                </a>
-              </li>
-              <li>{portfolioData.personal.location}</li>
-              <li className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                <span className="text-sm">Available for freelance</span>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      {/* Bottom Bar */}
-      <div className="border-t border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center space-x-1 text-gray-300 mb-4 md:mb-0">
-              <span>© {currentYear} Made with</span>
-              <Heart className="w-4 h-4 text-red-500 animate-pulse" />
-              <span>by {portfolioData.personal.name}</span>
+            <h4 className="mono text-xs uppercase tracking-widest mb-4" style={{ color: 'var(--text-3)' }}>Contact</h4>
+            <div className="space-y-3">
+              <a
+                href={`mailto:${portfolioData.personal.email}`}
+                className="flex items-center gap-2 text-sm no-underline transition-colors duration-200"
+                style={{ color: 'var(--text-3)' }}
+                onMouseEnter={e => { e.currentTarget.style.color = 'var(--teal)' }}
+                onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-3)' }}
+              >
+                <Mail size={13} /> {portfolioData.personal.email}
+              </a>
+              <p className="text-sm" style={{ color: 'var(--text-3)' }}>📍 {portfolioData.personal.location}</p>
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full anim-pulse-dot" style={{ background: 'var(--green)' }} />
+                <span className="text-sm font-medium" style={{ color: 'var(--green)' }}>Open to work</span>
+              </div>
             </div>
-            
-            {/* Back to Top */}
-            <button
-              onClick={scrollToTop}
-              className="flex items-center space-x-2 text-gray-300 hover:text-purple-400 transition-colors duration-200 focus:outline-none group"
-            >
-              <span>Back to top</span>
-              <ArrowUp className="w-4 h-4 group-hover:-translate-y-1 transition-transform duration-200" />
-            </button>
           </div>
         </div>
       </div>
 
-      {/* Floating Background Elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500 rounded-full opacity-5 blur-3xl"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-pink-500 rounded-full opacity-5 blur-3xl"></div>
+      {/* Bottom bar */}
+      <div style={{ borderTop: '1px solid var(--border)' }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between flex-wrap gap-3">
+          <p className="mono text-xs flex items-center gap-1.5" style={{ color: 'var(--text-3)' }}>
+            © {new Date().getFullYear()} {portfolioData.personal.name} · Made with
+            <Heart size={11} color="var(--red)" fill="var(--red)" />
+          </p>
+          <button
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="flex items-center gap-1.5 mono text-xs px-3 py-1.5 rounded-lg cursor-pointer border transition-all duration-200 bg-transparent"
+            style={{ color: 'var(--text-3)', borderColor: 'var(--border)' }}
+            onMouseEnter={e => {
+              e.currentTarget.style.borderColor = 'var(--accent)'
+              e.currentTarget.style.color = 'var(--accent)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.borderColor = 'var(--border)'
+              e.currentTarget.style.color = 'var(--text-3)'
+            }}
+          >
+            <ArrowUp size={12} /> Back to top
+          </button>
+        </div>
       </div>
     </footer>
   )
 }
-
-export default Footer

@@ -1,47 +1,53 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
-import {
-  Menu, X, Sun, Moon,
-  Home, User, FolderGit2, BookOpen,
-  FileText, Code2, Github, MessageCircle
-} from 'lucide-react'
+import { Menu, X, Sun, Moon, Code2, Github, Mail, Linkedin, Twitter } from 'lucide-react'
 import { useTheme } from '../contexts/ThemeContext'
 import { portfolioData } from '../data/data'
+import { motion, AnimatePresence } from 'framer-motion'
 
-// Navigation items — trimmed to the essentials
-const NAV_ITEMS = [
-  { name: 'Home', href: '#home', icon: Home, isSection: true },
-  { name: 'About', href: '#about', icon: User, isSection: true },
-  { name: 'Projects', href: '#projects', icon: FolderGit2, isSection: true },
-  { name: 'Skills', href: '#skills', icon: Code2, isSection: true },
-  { name: 'Blog', href: '#blog', icon: BookOpen, isSection: true },
-  { name: 'Resume', href: '/resume', icon: FileText, isSection: false, accent: '#a78bfa' },
-  { name: 'LeetCode', href: '/leetcode', icon: Code2, isSection: false, accent: '#ffa116' },
-  { name: 'GitHub', href: '/github', icon: Github, isSection: false, accent: '#4ade80' },
-  { name: 'Contact', href: '#contact', icon: MessageCircle, isSection: true },
+const NAV = [
+  { label: 'About',    href: '#about',    section: true  },
+  { label: 'Projects', href: '#projects', section: true  },
+  { label: 'Skills',   href: '#skills',   section: true  },
+  { label: 'Blog',     href: '#blog',     section: true  },
+  { label: 'Resume',   href: '/resume',   section: false },
+  { label: 'LeetCode', href: '/leetcode', section: false },
+  { label: 'Contact',  href: '#contact',  section: true  },
 ]
 
 export default function Header() {
-  const [menuOpen, setMenuOpen] = useState(false)
+  const [open,     setOpen]     = useState(false)
   const [scrolled, setScrolled] = useState(false)
-  const router = useRouter()
+  const router   = useRouter()
   const pathname = usePathname()
   const { theme, toggleTheme, mounted } = useTheme()
-
   const dark = theme === 'dark'
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40)
-    window.addEventListener('scroll', onScroll)
-    return () => window.removeEventListener('scroll', onScroll)
+    const fn = () => setScrolled(window.scrollY > 48)
+    window.addEventListener('scroll', fn, { passive: true })
+    return () => window.removeEventListener('scroll', fn)
   }, [])
 
-  const handleNav = async (item) => {
-    setMenuOpen(false)
-    if (item.isSection) {
+  // Close menu on resize to desktop, and lock body scroll when open
+  useEffect(() => {
+    const fn = () => { if (window.innerWidth >= 768) setOpen(false) }
+    window.addEventListener('resize', fn)
+    return () => window.removeEventListener('resize', fn)
+  }, [])
+
+  useEffect(() => {
+    if (open) document.body.style.overflow = 'hidden'
+    else document.body.style.overflow = 'unset'
+    return () => { document.body.style.overflow = 'unset' }
+  }, [open])
+
+  const go = async (item) => {
+    setOpen(false)
+    if (item.section) {
       if (pathname === '/') {
         document.querySelector(item.href)?.scrollIntoView({ behavior: 'smooth' })
       } else {
@@ -52,222 +58,197 @@ export default function Header() {
     }
   }
 
-  const isActive = (item) => !item.isSection && pathname === item.href
-
-  /* ─── colour tokens that work in both light and dark ─────────────────── */
-  const bgScrolled = dark
-    ? 'rgba(10,10,18,0.88)'
-    : 'rgba(255,255,255,0.88)'
-  const borderClr = dark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.08)'
-  const textMain = dark ? '#e2e8f0' : '#1e293b'
-  const textMuted = dark ? '#94a3b8' : '#64748b'
+  const isActive = (item) => !item.section && pathname === item.href
 
   return (
-    <header style={{
-      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
-      background: scrolled ? bgScrolled : 'transparent',
-      backdropFilter: scrolled ? 'blur(18px) saturate(180%)' : 'none',
-      borderBottom: scrolled ? `1px solid ${borderClr}` : '1px solid transparent',
-      transition: 'background 0.3s, border-color 0.3s, backdrop-filter 0.3s',
-    }}>
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 1.25rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 62 }}>
+    <>
+      <header
+        className="fixed top-0 left-0 right-0 z-[100] transition-all duration-300"
+        style={{
+          background: scrolled
+            ? dark ? 'rgba(26,26,26,0.85)' : 'rgba(250,250,250,0.85)'
+            : 'transparent',
+          backdropFilter: scrolled ? 'blur(16px)' : 'none',
+          borderBottom: scrolled ? '1px solid var(--border)' : '1px solid transparent',
+        }}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 sm:h-20">
 
-          {/* ── Logo ──────────────────────────────────────────────────────── */}
-          <Link href="/" onClick={() => setMenuOpen(false)}
-            style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 9, flexShrink: 0 }}>
-            <div style={{
-              width: 32, height: 32, borderRadius: 9,
-              background: 'linear-gradient(135deg,#a78bfa 0%,#ec4899 100%)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <Code2 size={15} color="#fff" strokeWidth={2.5} />
-            </div>
-            <span style={{
-              fontWeight: 800, fontSize: '1rem', letterSpacing: -0.4,
-              background: 'linear-gradient(135deg,#a78bfa,#ec4899)',
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-            }}>
-              Vikas
-            </span>
-          </Link>
-
-          {/* ── Desktop Nav ───────────────────────────────────────────────── */}
-          <NavItems
-            items={NAV_ITEMS}
-            isActive={isActive}
-            handleNav={handleNav}
-            textMain={textMain}
-            dark={dark}
-            isMobile={false}
-          />
-
-          {/* ── Right controls ────────────────────────────────────────────── */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            {/* Social icon — GitHub */}
-            <a href={portfolioData.personal.github} target="_blank" rel="noreferrer"
-              title="GitHub"
-              style={{
-                color: textMuted, padding: 7, borderRadius: 8, display: 'flex',
-                transition: 'color 0.2s, background 0.2s',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.color = '#4ade80'; e.currentTarget.style.background = 'rgba(74,222,128,0.1)' }}
-              onMouseLeave={e => { e.currentTarget.style.color = textMuted; e.currentTarget.style.background = 'transparent' }}
-            >
-              <Github size={18} />
-            </a>
-
-            {/* Theme toggle */}
-            {mounted && (
-              <button
-                onClick={toggleTheme}
-                aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  width: 36, height: 36, borderRadius: 10, cursor: 'pointer', border: 'none',
-                  background: dark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.07)',
-                  color: dark ? '#fbbf24' : '#475569',
-                  transition: 'transform 0.3s, background 0.2s, color 0.2s',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.transform = 'rotate(20deg) scale(1.1)' }}
-                onMouseLeave={e => { e.currentTarget.style.transform = 'rotate(0deg) scale(1)' }}
+            {/* ── Logo ──────────────────────────────────────────── */}
+            <Link href="/" onClick={() => setOpen(false)} className="flex items-center gap-2.5 no-underline flex-shrink-0 group">
+              <div
+                className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110"
+                style={{ background: 'var(--accent)', boxShadow: '0 4px 14px rgba(255,161,22,.4)' }}
               >
-                {dark ? <Sun size={16} /> : <Moon size={16} />}
-              </button>
-            )}
+                <Code2 size={18} color="#111" strokeWidth={2.5} />
+              </div>
+              <span
+                className="font-bold text-lg mono tracking-tight"
+                style={{ color: 'var(--text)' }}
+              >
+                vikas<span style={{ color: 'var(--accent)' }}>.dev</span>
+              </span>
+            </Link>
 
-            {/* Hamburger – mobile only */}
-            <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              aria-label="Toggle menu"
-              style={{
-                display: 'none', /* shown by media query below */
-                background: 'transparent', border: 'none', cursor: 'pointer',
-                color: textMain, padding: 4, borderRadius: 8,
-              }}
-              className="nav-burger"
-            >
-              {menuOpen ? <X size={22} /> : <Menu size={22} />}
-            </button>
+            {/* ── Desktop nav ─────────────────────────────────── */}
+            <nav className="hidden md:flex items-center gap-1.5 bg-surface/50 px-2 py-1.5 rounded-2xl border" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+              {NAV.map((item) => {
+                const active = isActive(item)
+                return item.section ? (
+                  <button
+                    key={item.label}
+                    onClick={() => go(item)}
+                    className="px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 cursor-pointer border-none"
+                    style={{ background: 'transparent', color: 'var(--text-3)' }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.color = 'var(--text)'
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.color = 'var(--text-3)'
+                    }}
+                  >
+                    {item.label}
+                  </button>
+                ) : (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    className="px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 no-underline"
+                    style={{
+                      color: active ? 'var(--accent)' : 'var(--text-3)',
+                      background: active ? 'var(--accent-a)' : 'transparent',
+                    }}
+                    onMouseEnter={e => {
+                      if (!active) {
+                        e.currentTarget.style.color = 'var(--text)'
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      if (!active) {
+                        e.currentTarget.style.color = 'var(--text-3)'
+                      }
+                    }}
+                  >
+                    {item.label}
+                  </Link>
+                )
+              })}
+            </nav>
+
+            {/* ── Right controls ───────────────────────────────── */}
+            <div className="flex items-center gap-3">
+              {/* Theme toggle */}
+              {mounted && (
+                <button
+                  onClick={toggleTheme}
+                  aria-label={dark ? 'Switch to light' : 'Switch to dark'}
+                  className="flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 cursor-pointer border-none"
+                  style={{
+                    background: dark ? 'rgba(255,255,255,.05)' : 'rgba(0,0,0,.04)',
+                    color: dark ? 'var(--accent)' : 'var(--text-2)',
+                  }}
+                  onMouseEnter={e => { 
+                    e.currentTarget.style.transform = 'rotate(15deg) scale(1.05)'
+                    e.currentTarget.style.background = dark ? 'rgba(255,255,255,.1)' : 'rgba(0,0,0,.08)'
+                  }}
+                  onMouseLeave={e => { 
+                    e.currentTarget.style.transform = 'none'
+                    e.currentTarget.style.background = dark ? 'rgba(255,255,255,.05)' : 'rgba(0,0,0,.04)'
+                  }}
+                >
+                  {dark ? <Sun size={18} /> : <Moon size={18} />}
+                </button>
+              )}
+
+              {/* Hamburger — mobile only */}
+              <button
+                onClick={() => setOpen(!open)}
+                aria-label="Toggle menu"
+                className="flex md:hidden items-center justify-center w-10 h-10 rounded-xl cursor-pointer border-none transition-all relative z-[110]"
+                style={{ 
+                  background: open ? 'var(--accent-a)' : 'transparent', 
+                  color: open ? 'var(--accent)' : 'var(--text)' 
+                }}
+              >
+                {open ? <X size={24} /> : <Menu size={24} />}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* ── Mobile drawer ──────────────────────────────────────────────────── */}
-      {menuOpen && (
-        <div style={{
-          background: dark ? 'rgba(9,9,18,0.97)' : 'rgba(255,255,255,0.97)',
-          backdropFilter: 'blur(20px)',
-          borderTop: `1px solid ${borderClr}`,
-          padding: '0.75rem 1.25rem 1.5rem',
-        }}>
-          <NavItems
-            items={NAV_ITEMS}
-            isActive={isActive}
-            handleNav={handleNav}
-            textMain={textMain}
-            dark={dark}
-            isMobile={true}
-          />
-        </div>
-      )}
+      {/* ── Mobile Fullscreen Menu ──────────────────────────────────── */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, backdropFilter: 'blur(0px)' }}
+            animate={{ opacity: 1, backdropFilter: 'blur(24px)' }}
+            exit={{ opacity: 0, backdropFilter: 'blur(0px)' }}
+            transition={{ duration: 0.4 }}
+            className="fixed inset-0 z-[90] flex flex-col pt-24 px-6 pb-8 md:hidden"
+            style={{ background: dark ? 'rgba(26,26,26,.95)' : 'rgba(250,250,250,.95)' }}
+          >
+            <div className="flex flex-col gap-2 flex-1 overflow-y-auto">
+              {NAV.map((item, i) => {
+                const active = isActive(item)
+                return (
+                  <motion.div
+                    key={item.label}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.1 + i * 0.05, ease: 'easeOut' }}
+                  >
+                    {item.section ? (
+                      <button
+                        onClick={() => go(item)}
+                        className="w-full text-left py-4 text-2xl font-bold cursor-pointer border-none transition-colors flex items-center justify-between group"
+                        style={{ background: 'transparent', color: 'var(--text)' }}
+                      >
+                        <span className="group-hover:translate-x-2 transition-transform duration-300">{item.label}</span>
+                      </button>
+                    ) : (
+                      <Link
+                        href={item.href}
+                        onClick={() => setOpen(false)}
+                        className="w-full py-4 text-2xl font-bold no-underline transition-colors flex items-center justify-between group"
+                        style={{ color: active ? 'var(--accent)' : 'var(--text)' }}
+                      >
+                        <span className="group-hover:translate-x-2 transition-transform duration-300">{item.label}</span>
+                        {active && <span className="w-2 h-2 rounded-full bg-orange-500 shadow-[0_0_8px_#ea580c]" />}
+                      </Link>
+                    )}
+                  </motion.div>
+                )
+              })}
+            </div>
 
-      <style>{`
-        @media (max-width: 767px) {
-          .nav-desktop { display: none !important; }
-          .nav-burger  { display: flex !important; }
-        }
-        @media (min-width: 768px) {
-          .nav-desktop { display: flex !important; }
-          .nav-burger  { display: none !important; }
-        }
-      `}</style>
-    </header>
-  )
-}
-
-/* ─── Shared nav item list ──────────────────────────────────────────────── */
-function NavItems({ items, isActive, handleNav, textMain, dark, isMobile }) {
-  const [hov, setHov] = useState(null)
-
-  if (isMobile) {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        {items.map(item => {
-          const active = isActive(item)
-          const accent = item.accent ?? (dark ? '#c084fc' : '#7c3aed')
-          const color = active || hov === item.name ? accent : textMain
-          const Icon = item.icon
-          return item.isSection ? (
-            <button key={item.name} onClick={() => handleNav(item)}
-              onMouseEnter={() => setHov(item.name)} onMouseLeave={() => setHov(null)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left',
-                background: 'transparent', border: 'none', cursor: 'pointer',
-                padding: '10px 12px', borderRadius: 9, fontSize: '0.88rem', fontWeight: 500,
-                color, transition: 'color 0.2s',
-              }}>
-              <Icon size={15} /> {item.name}
-            </button>
-          ) : (
-            <Link key={item.name} href={item.href} onClick={() => handleNav(item)}
-              onMouseEnter={() => setHov(item.name)} onMouseLeave={() => setHov(null)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 10,
-                textDecoration: 'none', padding: '10px 12px', borderRadius: 9,
-                fontSize: '0.88rem', fontWeight: 600,
-                color,
-                background: active ? `${accent}18` : 'transparent',
-                transition: 'color 0.2s, background 0.2s',
-              }}>
-              <Icon size={15} /> {item.name}
-            </Link>
-          )
-        })}
-      </div>
-    )
-  }
-
-  // Desktop
-  return (
-    <nav className="nav-desktop" style={{ alignItems: 'center', gap: 2 }}>
-      {items.map(item => {
-        const active = isActive(item)
-        const accent = item.accent ?? (dark ? '#c084fc' : '#7c3aed')
-        const color = active || hov === item.name ? accent : (dark ? '#cbd5e1' : '#475569')
-        const Icon = item.icon
-        const isHov = hov === item.name
-
-        return item.isSection ? (
-          <button key={item.name} onClick={() => handleNav(item)}
-            onMouseEnter={() => setHov(item.name)} onMouseLeave={() => setHov(null)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 5,
-              background: isHov ? (dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)') : 'transparent',
-              border: 'none', cursor: 'pointer', padding: '6px 11px', borderRadius: 8,
-              fontSize: '0.82rem', fontWeight: 500, color, transition: 'color 0.2s, background 0.15s',
-            }}>
-            <Icon size={13} strokeWidth={2} /> {item.name}
-          </button>
-        ) : (
-          <Link key={item.name} href={item.href} onClick={() => setHov(null)}
-            onMouseEnter={() => setHov(item.name)} onMouseLeave={() => setHov(null)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 5,
-              textDecoration: 'none', padding: '6px 11px', borderRadius: 8,
-              fontSize: '0.82rem', fontWeight: 600, color,
-              background: active
-                ? `${accent}20`
-                : isHov
-                  ? (dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)')
-                  : 'transparent',
-              boxShadow: active ? `0 0 10px ${accent}40` : 'none',
-              transition: 'color 0.2s, background 0.15s, box-shadow 0.2s',
-            }}>
-            <Icon size={13} strokeWidth={2} /> {item.name}
-          </Link>
-        )
-      })}
-    </nav>
+            {/* Social Links Footer */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="mt-auto pt-6 flex items-center justify-between border-t"
+              style={{ borderColor: 'var(--border)' }}
+            >
+              <div className="text-sm font-semibold mono" style={{ color: 'var(--text-3)' }}>
+                Say hello
+              </div>
+              <div className="flex gap-4">
+                <a href={portfolioData.personal.github} target="_blank" rel="noreferrer" className="text-gray-400 hover:text-white transition-colors p-2 rounded-full bg-white/5">
+                  <Github size={20} />
+                </a>
+                <a href={portfolioData.personal.linkedin} target="_blank" rel="noreferrer" className="text-gray-400 hover:text-white transition-colors p-2 rounded-full bg-white/5">
+                  <Linkedin size={20} />
+                </a>
+                <a href={`mailto:${portfolioData.personal.email}`} className="text-gray-400 hover:text-white transition-colors p-2 rounded-full bg-white/5">
+                  <Mail size={20} />
+                </a>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   )
 }

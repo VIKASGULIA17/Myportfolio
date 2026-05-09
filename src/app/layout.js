@@ -1,14 +1,16 @@
-import { Inter } from 'next/font/google'
 import './globals.css'
 import ClientLayout from './client-layout'
 
-const inter = Inter({ subsets: ['latin'] })
-
 export const metadata = {
-  title: 'Vikas - Portfolio',
-  description: 'AI/ML Engineer and Full Stack Developer Portfolio',
-  keywords: 'portfolio, AI, ML, full stack developer, React, Next.js',
-  authors: [{ name: 'Vikas' }],
+  title: 'Vikas Gulia — Data Scientist & Developer',
+  description: 'Portfolio of Vikas Gulia — Data Scientist, Full Stack Developer, and ML Engineer based in Delhi, India.',
+  keywords: 'portfolio, data science, AI, ML, full stack developer, React, Next.js, Python',
+  authors: [{ name: 'Vikas Gulia' }],
+  openGraph: {
+    title: 'Vikas Gulia — Data Scientist & Developer',
+    description: 'Portfolio of Vikas Gulia — Data Scientist, Full Stack Developer, and ML Engineer.',
+    type: 'website',
+  }
 }
 
 export const viewport = {
@@ -19,7 +21,15 @@ export const viewport = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className} suppressHydrationWarning>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body suppressHydrationWarning>
         <ClientLayout>
           {children}
         </ClientLayout>
