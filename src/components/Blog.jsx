@@ -58,23 +58,18 @@ export default function Blog() {
                 initial={{ opacity: 0, y: 30 }}
                 animate={visible ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
-                whileHover={{ y: -8, scale: 1.01 }}
+                whileHover={{ y: -8, boxShadow: '0 12px 30px rgba(0,0,0,0.1)' }}
                 className="rounded-2xl overflow-hidden cursor-pointer flex flex-col group relative"
                 style={{
                   background: 'var(--bg)',
                   border: '1px solid var(--border)',
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
                 }}
                 onClick={() => window.open(post.slug, '_blank', 'noopener,noreferrer')}
-                onMouseEnter={e => {
-                  e.currentTarget.style.borderColor = 'var(--accent)'
-                  e.currentTarget.style.boxShadow = '0 12px 30px rgba(0,0,0,0.1), 0 0 0 1px var(--accent-a)'
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.borderColor = 'var(--border)'
-                  e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.03)'
-                }}
               >
+                {/* Highlight bar on top */}
+                <div className="absolute top-0 left-0 right-0 h-1 z-10 transition-transform origin-left scale-x-0 group-hover:scale-x-100 duration-500" style={{ background: cc }} />
+                
                 {/* Image */}
                 <div className="relative overflow-hidden flex-shrink-0" style={{ height: 180 }}>
                   <Image
