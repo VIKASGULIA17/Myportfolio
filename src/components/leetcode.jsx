@@ -178,35 +178,66 @@ function SubmissionCalendar({ T, calendarData }) {
         return T.orange;
     };
 
+    // Prepare month labels
+    const monthLabels = [];
+    let lastMonth = -1;
+    for (let w = 0; w < 53; w++) {
+        const dIdx = w * 7;
+        if (dIdx < days.length) {
+            const m = days[dIdx].getMonth();
+            if (m !== lastMonth) {
+                monthLabels.push({ label: days[dIdx].toLocaleDateString('en-US', { month: 'short' }), weekIdx: w });
+                lastMonth = m;
+            }
+        }
+    }
+
     return (
         <Card T={T} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} style={{ marginTop: '1.75rem', overflowX: 'auto' }}>
             <SectionTitle T={T} icon={Calendar}>Activity Calendar</SectionTitle>
-            <div style={{ minWidth: 700, display: 'flex', gap: 4 }}>
-                {/* Divide 365 days into columns of 7 (weeks) */}
-                {Array.from({ length: 53 }).map((_, weekIdx) => (
-                    <div key={weekIdx} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                        {Array.from({ length: 7 }).map((_, dayIdx) => {
-                            const dateIdx = weekIdx * 7 + dayIdx;
-                            if (dateIdx >= days.length) return <div key={dayIdx} style={{ width: 12, height: 12 }} />;
-                            const date = days[dateIdx];
-                            const count = counts[date.getTime()] || 0;
-                            return (
-                                <div
-                                    key={dayIdx}
-                                    title={`${date.toDateString()}: ${count} submissions`}
-                                    style={{
-                                        width: 12, height: 12, borderRadius: 2,
-                                        background: getIntensityColor(count),
-                                        border: `1px solid ${T.surfaceHover}`,
-                                        cursor: 'pointer', transition: 'transform 0.2s'
-                                    }}
-                                    onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.2)'}
-                                    onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-                                />
-                            );
-                        })}
-                    </div>
-                ))}
+            <div style={{ minWidth: 700 }}>
+                {/* Month labels */}
+                <div style={{ position: 'relative', height: 20, marginBottom: 4 }}>
+                    {monthLabels.map((m, i) => (
+                        <span key={i} style={{
+                            position: 'absolute',
+                            left: m.weekIdx * 16,
+                            fontSize: '0.75rem',
+                            color: T.muted,
+                            fontWeight: 600
+                        }}>
+                            {m.label}
+                        </span>
+                    ))}
+                </div>
+                {/* The Grid */}
+                <div style={{ display: 'flex', gap: 4 }}>
+                    {/* Divide 365 days into columns of 7 (weeks) */}
+                    {Array.from({ length: 53 }).map((_, weekIdx) => (
+                        <div key={weekIdx} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            {Array.from({ length: 7 }).map((_, dayIdx) => {
+                                const dateIdx = weekIdx * 7 + dayIdx;
+                                if (dateIdx >= days.length) return <div key={dayIdx} style={{ width: 12, height: 12 }} />;
+                                const date = days[dateIdx];
+                                const count = counts[date.getTime()] || 0;
+                                return (
+                                    <div
+                                        key={dayIdx}
+                                        title={`${date.toDateString()}: ${count} submissions`}
+                                        style={{
+                                            width: 12, height: 12, borderRadius: 2,
+                                            background: getIntensityColor(count),
+                                            border: `1px solid ${T.surfaceHover}`,
+                                            cursor: 'pointer', transition: 'transform 0.2s'
+                                        }}
+                                        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.2)'}
+                                        onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                                    />
+                                );
+                            })}
+                        </div>
+                    ))}
+                </div>
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 6, marginTop: 12, fontSize: '0.75rem', color: T.muted }}>
                 <span>Less</span>

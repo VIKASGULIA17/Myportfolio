@@ -201,7 +201,7 @@ export default function Hero() {
                   boxShadow: '0 4px 14px rgba(255,161,22,.4)',
                   animationDelay: '0s',
                 }}>
-                550+ LC
+                650+ LC
               </div>
 
               {/* Badge: ML */}
