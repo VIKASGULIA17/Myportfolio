@@ -189,7 +189,7 @@ export default function Hero() {
                 width: 220, height: 220,
               }}>
                 <div className="w-full h-full rounded-full overflow-hidden" style={{ border: '4px solid var(--bg)' }}>
-                  <Image src="/image.png" alt={portfolioData.personal.name} width={220} height={220}
+                  <Image src="/IMG_6804.jpg" alt={portfolioData.personal.name} width={220} height={220}
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }} priority />
                 </div>
               </div>

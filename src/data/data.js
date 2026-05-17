@@ -171,7 +171,7 @@ export const portfolioData = {
     degree: "Bachelor of Computer Applications",
     institution: "IITM Janakpuri",
     year: "2023 - 2026",
-    status: "3rd Year (Currently Pursuing)",
+    status: "BCA Graduate",
     gpa: "9.6/10",
     coursework: [
       "Data Structures & Algorithms",
@@ -187,7 +187,7 @@ export const portfolioData = {
     achievements: [
       "Tech Society Core Member",
       "Code of Duty Winner(problem solving contest)",
-      "Leetcode 550+ Problem solved"
+      "Leetcode 650+ Problem solved"
     ],
     certifications: [
 

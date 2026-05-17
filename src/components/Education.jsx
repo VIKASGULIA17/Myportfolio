@@ -14,7 +14,7 @@ export default function Education() {
       ([e]) => {
         if (e.isIntersecting) {
           setVisible(true)
-          setTimeout(() => setBarW(75), 500)
+          setTimeout(() => setBarW(98), 500)
           obs.disconnect()
         }
       },
@@ -80,7 +80,7 @@ export default function Education() {
             <div className="mb-5">
               <div className="flex justify-between mb-1.5">
                 <span className="text-xs" style={{ color: 'var(--text-3)' }}>Academic Progress</span>
-                <span className="mono text-xs font-bold" style={{ color: 'var(--accent)' }}>75%</span>
+                <span className="mono text-xs font-bold" style={{ color: 'var(--accent)' }}>98%</span>
               </div>
               <div className="bar-track">
                 <div style={{
