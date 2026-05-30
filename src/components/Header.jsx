@@ -15,6 +15,7 @@ const NAV = [
   { label: 'Blog',     href: '#blog',     section: true  },
   { label: 'Resume',   href: '/resume',   section: false },
   { label: 'LeetCode', href: '/leetcode', section: false },
+  { label: 'Github', href: '/github', section: false },
   { label: 'Contact',  href: '#contact',  section: true  },
 ]
 
