@@ -1,14 +1,15 @@
 'use client'
 
 import { Code2, Github, Linkedin, Instagram, ArrowUp, Heart, Mail } from 'lucide-react'
+import { useRouter, usePathname } from 'next/navigation'
 import { portfolioData } from '../data/data'
 
 const LINKS = [
-  { name: 'About',    href: '#about'    },
-  { name: 'Projects', href: '#projects' },
-  { name: 'Skills',   href: '#skills'   },
-  { name: 'Blog',     href: '#blog'     },
-  { name: 'Contact',  href: '#contact'  },
+  { name: 'About',    href: '#about',    section: true },
+  { name: 'Projects', href: '#projects', section: true },
+  { name: 'Skills',   href: '#skills',   section: true },
+  { name: 'Garden',   href: '/knowledge-garden', section: false },
+  { name: 'Contact',  href: '#contact',  section: true },
 ]
 
 const SOCIALS = [
@@ -17,9 +18,21 @@ const SOCIALS = [
   { icon: Instagram, url: portfolioData.personal.instagram, label: 'Instagram' },
 ]
 
-const scroll = (h) => document.querySelector(h)?.scrollIntoView({ behavior: 'smooth' })
-
 export default function Footer() {
+  const router = useRouter()
+  const pathname = usePathname()
+
+  const go = async (item) => {
+    if (item.section) {
+      if (pathname === '/') {
+        document.querySelector(item.href)?.scrollIntoView({ behavior: 'smooth' })
+      } else {
+        await router.push(`/?section=${item.href.slice(1)}`)
+      }
+    } else {
+      router.push(item.href)
+    }
+  }
   return (
     <footer style={{ background: 'var(--surface)', borderTop: '1px solid var(--border)' }}>
 
@@ -71,7 +84,7 @@ export default function Footer() {
               {LINKS.map(l => (
                 <li key={l.name}>
                   <button
-                    onClick={() => scroll(l.href)}
+                    onClick={() => go(l)}
                     className="text-sm cursor-pointer border-none bg-transparent p-0 transition-colors duration-200"
                     style={{ color: 'var(--text-3)' }}
                     onMouseEnter={e => { e.currentTarget.style.color = 'var(--accent)' }}

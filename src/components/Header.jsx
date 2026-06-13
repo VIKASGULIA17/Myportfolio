@@ -12,7 +12,7 @@ const NAV = [
   { label: 'About',    href: '#about',    section: true  },
   { label: 'Projects', href: '#projects', section: true  },
   { label: 'Skills',   href: '#skills',   section: true  },
-  { label: 'Blog',     href: '#blog',     section: true  },
+  { label: 'Garden',   href: '/knowledge-garden', section: false },
   { label: 'Resume',   href: '/resume',   section: false },
   { label: 'LeetCode', href: '/leetcode', section: false },
   { label: 'Github', href: '/github', section: false },
