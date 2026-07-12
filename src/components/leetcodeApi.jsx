@@ -57,7 +57,7 @@ class LeetCodeAPI {
    * Call this before re-fetching on manual refresh.
    */
   clearCache(username) {
-    const paths = ['', '/solved', '/badges', '/contest', '/submission?limit=10', '/calendar'];
+    const paths = ['', '/solved', '/badges', '/contest', '/submission?limit=50', '/calendar'];
     paths.forEach(p => {
       try { localStorage.removeItem(cacheKey(`/${username}${p}`)); } catch { }
     });
@@ -69,7 +69,7 @@ class LeetCodeAPI {
       solved: `/${username}/solved`,
       badges: `/${username}/badges`,
       contest: `/${username}/contest`,
-      submissions: `/${username}/submission?limit=10`,
+      submissions: `/${username}/submission?limit=50`,
       calendar: `/${username}/calendar`,
     };
 

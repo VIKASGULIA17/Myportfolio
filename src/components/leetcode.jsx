@@ -337,7 +337,14 @@ const LeetCode = () => {
     const solved = data?.solved ?? {};
     const badgesData = data?.badges ?? {};
     const contestData = data?.contest ?? {};
-    const submissions = data?.submissions?.submission ?? [];
+    const rawSubmissions = data?.submissions?.submission ?? [];
+    const seen = new Set();
+    const submissions = rawSubmissions.filter(s => {
+        const slug = s.titleSlug || s.title;
+        if (!slug || seen.has(slug)) return false;
+        seen.add(slug);
+        return true;
+    }).slice(0, 15);
     const calendarData = data?.calendar ?? {};
 
     const kpis = [
@@ -758,14 +765,14 @@ const LeetCode = () => {
                     </Card>
                 )}
 
-                {/* ── Last 10 Submissions ── */}
+                {/* ── Recent Submissions ── */}
                 <Card
                     T={T}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.35 }}
                 >
-                    <SectionTitle T={T} icon={Clock}>Last 10 Submissions</SectionTitle>
+                    <SectionTitle T={T} icon={Clock}>Recent Submissions</SectionTitle>
 
                     {submissions.length === 0 ? (
                         <p style={{ color: T.muted, fontSize: '0.85rem' }}>No submission data available.</p>

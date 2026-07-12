@@ -342,6 +342,48 @@ export const knowledgeGardenData = {
           summary: "The grand synthesis of the Gita. Krishna details liberation through renouncing ego and surrendering all actions to the Divine."
         }
       ]
+    },
+    {
+      id: "the-courage-to-be-disliked",
+      title: "The Courage to Be Disliked",
+      author: "Ichiro Kishimi & Fumitake Koga",
+      status: "Read",
+      progress: 100,
+      theme: "courage",
+      keyLessons: [
+        "Separation of Tasks: Distinguish between your tasks and other people's tasks to eliminate interpersonal friction.",
+        "All problems stem from interpersonal relationships. True freedom is the willingness to be disliked by others.",
+        "Live intensely in the 'here and now'—our past does not dictate our present, only our goals do."
+      ],
+      takeaways: "This book completely reframed how I handle feedback and external expectations. As an engineer, trying to please everyone leads to burnout and compromised designs. Real freedom means separating my tasks from those of others, allowing me to focus on creating quality software with pure intent.",
+      notes: "Written as a dialogue between a youth and a philosopher, this book explains Adlerian psychology. It refutes trauma and the causal link between past and present, introducing teleology: we act to achieve current goals. Self-acceptance, confidence in others, and contribution to others are the keys to happiness.",
+      chapters: [
+        {
+          chapter: "Night 1",
+          title: "The First Night: Deny Trauma",
+          summary: "Adlerian psychology rejects etiology (cause-and-effect trauma) in favor of teleology (acting for present goals). We determine our own lives according to the meaning we give to past experiences."
+        },
+        {
+          chapter: "Night 2",
+          title: "The Second Night: All Problems Are Interpersonal",
+          summary: "All problems are interpersonal relationship problems. Comparing ourselves to others creates artificial competition. True growth comes from walking forward on our own path, seeing others as comrades."
+        },
+        {
+          chapter: "Night 3",
+          title: "The Third Night: Discard Other People's Tasks",
+          summary: "Do not live to satisfy other people's expectations. Through the separation of tasks, identify who is affected by a choice, focus exclusively on your own tasks, and let go of the need for validation."
+        },
+        {
+          chapter: "Night 4",
+          title: "The Fourth Night: Where the Center of the World Is",
+          summary: "Build horizontal relationships instead of vertical ones. Praise and rebuke are tools of manipulation that reinforce vertical hierarchies. Build community feeling by offering encouragement and gratitude."
+        },
+        {
+          chapter: "Night 5",
+          title: "The Fifth Night: To Live in Earnest in the Here and Now",
+          summary: "Happiness is defined as a feeling of contribution. Accept what you cannot change, trust others unconditionally, and focus on the present moment instead of looking at the past or the future."
+        }
+      ]
     }
   ],
 
@@ -402,30 +444,35 @@ export const knowledgeGardenData = {
       {
         title: "Continuous Learning",
         description: "Dedicate time every single day to learn. Small daily gains of 1% compound into massive growth over a year.",
+        quote: "The day you stop learning is the day you stop growing. An investment in knowledge always pays the best interest.",
         icon: "TrendingUp",
         color: "var(--accent)"
       },
       {
         title: "Consistency Over Intensity",
         description: "Coding for 1 hour every day is infinitely better than coding for 10 hours once a week. Habits build neural pathways.",
+        quote: "Consistency over intensity. Real growth happens in the daily compounding of effort, not the occasional sprint.",
         icon: "Clock",
         color: "var(--teal)"
       },
       {
         title: "Building Projects to Learn",
         description: "Tutorial hell is real. The only way to truly learn is to build real applications, break them, and figure out how to fix them.",
+        quote: "Tutorial hell is real. The only way to truly learn a new tool is to build real applications, break them, and figure out how to fix them.",
         icon: "Wrench",
         color: "var(--green)"
       },
       {
         title: "Learning by Doing",
         description: "Active recall and hands-on experimentation beat passive reading. Type the code, run it, and experiment with changes.",
+        quote: "Tell me and I forget. Teach me and I remember. Involve me and I learn. Type the code, run it, and experiment with changes.",
         icon: "Cpu",
         color: "var(--yellow)"
       },
       {
         title: "Holistic Development",
         description: "A great engineer is not just a coding machine. Combining technical mastery with physical fitness, philosophy, and communication makes you a complete professional.",
+        quote: "A great engineer is not just a coding machine. Combining technical mastery with fitness, philosophy, and empathy makes a complete professional.",
         icon: "Activity",
         color: "var(--accent)"
       }

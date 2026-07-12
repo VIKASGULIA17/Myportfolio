@@ -101,6 +101,24 @@ function BookCover({ title, author, theme }) {
         <span className="text-[7px] uppercase tracking-wider text-amber-300/80 mt-1.5 font-serif">Nishkama Karma</span>
       </div>
     )
+  } else if (theme === 'courage') {
+    coverStyle = {
+      background: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #1d4ed8 100%)',
+      color: '#f8fafc',
+      borderColor: '#3b82f6',
+    }
+    decoration = (
+      <div className="my-3 flex flex-col items-center">
+        <div className="w-[38px] h-[38px] rounded-full border-2 border-dashed border-blue-400/50 flex items-center justify-center relative bg-blue-500/10">
+          <div className="absolute inset-[1px] rounded-full border border-dashed border-blue-300/30 animate-spin" style={{ animationDuration: '35s' }} />
+          {/* Zen Ensō circle representing freedom and self-acceptance */}
+          <svg viewBox="0 0 100 100" className="w-6 h-6 text-blue-300 opacity-90 animate-pulse" fill="none" stroke="currentColor" strokeWidth="6" strokeLinecap="round">
+            <path d="M 50 15 A 35 35 0 1 1 25 32" />
+          </svg>
+        </div>
+        <span className="text-[7.5px] uppercase tracking-widest text-blue-300 mt-2 font-bold mono">Adlerian</span>
+      </div>
+    )
   } else {
     coverStyle = {
       background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
@@ -491,11 +509,25 @@ export default function KnowledgeGarden() {
             <div className="lg:col-span-5 flex flex-col justify-center p-8 sm:p-10 rounded-2xl border bg-gradient-to-br from-[var(--surface)] to-[var(--elevated)] relative overflow-hidden"
               style={{ borderColor: 'var(--border)' }}>
               <div className="absolute top-4 left-6 text-6xl font-serif text-[var(--accent)] opacity-20 pointer-events-none">&ldquo;</div>
-              <p className="text-lg sm:text-xl font-bold leading-relaxed relative z-10 font-serif italic text-center lg:text-left" style={{ color: 'var(--text)' }}>
-                {knowledgeGardenData.learningPhilosophy.quote}
-              </p>
-              <div className="w-16 h-1 bg-[var(--accent)] rounded-full mt-6 mx-auto lg:mx-0" />
-              <p className="mt-4 text-xs font-semibold uppercase tracking-widest text-[var(--text-3)] mono text-center lg:text-left">My Daily Mantra</p>
+              
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activePhilosophy}
+                  initial={{ opacity: 0, x: -15 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 15 }}
+                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                  className="relative z-10"
+                >
+                  <p className="text-lg sm:text-xl font-bold leading-relaxed font-serif italic text-center lg:text-left" style={{ color: 'var(--text)' }}>
+                    &ldquo;{knowledgeGardenData.learningPhilosophy.principles[activePhilosophy]?.quote || knowledgeGardenData.learningPhilosophy.quote}&rdquo;
+                  </p>
+                  <div className="w-16 h-1 bg-[var(--accent)] rounded-full mt-6 mx-auto lg:mx-0" />
+                  <p className="mt-4 text-xs font-semibold uppercase tracking-widest text-[var(--text-3)] mono text-center lg:text-left">
+                    {knowledgeGardenData.learningPhilosophy.principles[activePhilosophy]?.title || "My Daily Mantra"}
+                  </p>
+                </motion.div>
+              </AnimatePresence>
             </div>
 
             {/* Principles list */}
