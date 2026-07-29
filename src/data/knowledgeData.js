@@ -21,7 +21,7 @@ export const knowledgeGardenData = {
       topic: "Data Structures & Algorithms",
       why: "To build strong problem-solving muscles and optimize code runtime and memory consumption.",
       progress: 85,
-      goals: ["Solve 150+ more Leetcode problems", "Deepen understanding of Graphs and DP", "Practice competitive programming regularly", "Optimize time/space complexity in project code"]
+      goals: ["Reach 1000+ Leetcode problems", "Master advanced Graphs and DP patterns", "Practice competitive programming regularly", "Optimize time/space complexity in project code"]
     },
     {
       id: "real-projects",

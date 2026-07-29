@@ -14,10 +14,10 @@ export const portfolioData = {
   },
 
   about: {
-    description: "I'm a passionate Data Scientist and Web Developer with expertise in turning complex data into actionable insights and building seamless digital experiences. Currently pursuing B.C.A. and constantly exploring the intersection of data science and web technologies.",
+    description: "I'm a passionate Data Scientist and Web Developer with expertise in turning complex data into actionable insights and building seamless digital experiences. Recent B.C.A. graduate with 9.6 GPA, constantly exploring the intersection of data science and web technologies.",
     highlights: [
-      "2+ years of experience in data science and web development",
-      "Built 6+ production-ready applications",
+      "3+ years of experience in data science and web development",
+      "Built 9+ production-ready applications",
       "Expertise in ML model deployment and web integration",
       "Strong background in Front-end and backend development"
     ],
@@ -30,6 +30,18 @@ export const portfolioData = {
   },
 
   projects: [
+    {
+      id: 9,
+      title: "EaseStay",
+      description:
+        "A next-generation AI-powered PG & community management platform that revolutionizes how residential communities operate. Features voice-first issue reporting with Groq AI auto-triage, real-time tracking, smart technician assignments, and emergency alerts. Built with role-based architecture for residents, owners, and technicians.",
+      tech: ["React 19", "Vite 8", "Redux Toolkit", "Supabase", "Groq AI", "Tailwind CSS 4", "Lucide React"],
+      image: "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?q=80&w=1469&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      github: "https://github.com/VIKASGULIA17/EaseStay",
+      live: "https://ease-stay-mu.vercel.app",
+      category: "Full Stack",
+      featured: true
+    },
     {
       id: 8,
       title: "Code Arena",
@@ -171,7 +183,7 @@ export const portfolioData = {
     degree: "Bachelor of Computer Applications",
     institution: "IITM Janakpuri",
     year: "2023 - 2026",
-    status: "BCA Graduate",
+    status: "Graduated",
     gpa: "9.6/10",
     coursework: [
       "Data Structures & Algorithms",
@@ -187,7 +199,7 @@ export const portfolioData = {
     achievements: [
       "Tech Society Core Member",
       "Code of Duty Winner(problem solving contest)",
-      "Leetcode 650+ Problem solved"
+      "Leetcode 700+ Problem solved"
     ],
     certifications: [
 

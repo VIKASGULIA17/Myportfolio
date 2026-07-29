@@ -25,9 +25,12 @@ export default function Footer() {
   const go = async (item) => {
     if (item.section) {
       if (pathname === '/') {
-        document.querySelector(item.href)?.scrollIntoView({ behavior: 'smooth' })
+        const element = document.querySelector(item.href)
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' })
+        }
       } else {
-        await router.push(`/?section=${item.href.slice(1)}`)
+        await router.push(`/${item.href}`)
       }
     } else {
       router.push(item.href)

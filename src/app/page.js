@@ -1,7 +1,7 @@
 'use client'
 
-import { Suspense, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 
 import Header from '../components/Header'
 import Hero from '../components/Hero'
@@ -12,35 +12,31 @@ import Education from '../components/Education'
 import Contact from '../components/Contact'
 import Footer from '../components/Footer'
 
-function ScrollToSection() {
-  const searchParams = useSearchParams()
+function useHashScroll() {
+  const pathname = usePathname()
 
   useEffect(() => {
-    const section = searchParams.get('section')
-    if (section) {
-      // Use a small timeout to ensure the elements are mounted before scrolling
-      setTimeout(() => {
-        const element = document.getElementById(section)
+    // Check for hash on initial load and on navigation
+    const hash = window.location.hash
+    if (hash) {
+      const id = hash.slice(1) // remove the #
+      // Wait a tick for the section to render, then scroll
+      const timer = setTimeout(() => {
+        const element = document.getElementById(id)
         if (element) {
           element.scrollIntoView({ behavior: 'smooth' })
         }
-      }, 100)
+      }, 150)
+      return () => clearTimeout(timer)
     }
-  }, [searchParams])
-
-  return null
+  }, [pathname])
 }
 
-
-
-
-
 export default function HomePage() {
+  useHashScroll()
+
   return (
     <div className="App">
-      <Suspense fallback={null}>
-        <ScrollToSection />
-      </Suspense>
       <Header />
       <main>
         <Hero />

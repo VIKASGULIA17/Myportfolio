@@ -35,7 +35,7 @@ export default function Header() {
 
   // Close menu on resize to desktop, and lock body scroll when open
   useEffect(() => {
-    const fn = () => { if (window.innerWidth >= 768) setOpen(false) }
+    const fn = () => { if (window.innerWidth >= 1024) setOpen(false) }
     window.addEventListener('resize', fn)
     return () => window.removeEventListener('resize', fn)
   }, [])
@@ -50,9 +50,14 @@ export default function Header() {
     setOpen(false)
     if (item.section) {
       if (pathname === '/') {
-        document.querySelector(item.href)?.scrollIntoView({ behavior: 'smooth' })
+        // Already on homepage, just scroll smoothly
+        const element = document.querySelector(item.href)
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' })
+        }
       } else {
-        await router.push(`/?section=${item.href.slice(1)}`)
+        // Navigate with hash — homepage will pick it up on mount
+        await router.push(`/${item.href}`)
       }
     } else {
       router.push(item.href)
@@ -93,7 +98,7 @@ export default function Header() {
             </Link>
 
             {/* ── Desktop nav ─────────────────────────────────── */}
-            <nav className="hidden md:flex items-center gap-1.5 bg-surface/50 px-2 py-1.5 rounded-2xl border" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+            <nav className="hidden lg:flex items-center gap-1.5 bg-surface/50 px-2 py-1.5 rounded-2xl border" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
               {NAV.map((item) => {
                 const active = isActive(item)
                 return item.section ? (
@@ -162,11 +167,11 @@ export default function Header() {
                 </button>
               )}
 
-              {/* Hamburger — mobile only */}
+              {/* Hamburger — mobile and tablet */}
               <button
                 onClick={() => setOpen(!open)}
                 aria-label="Toggle menu"
-                className="flex md:hidden items-center justify-center w-10 h-10 rounded-xl cursor-pointer border-none transition-all relative z-[110]"
+                className="flex lg:hidden items-center justify-center w-10 h-10 rounded-xl cursor-pointer border-none transition-all relative z-[110]"
                 style={{ 
                   background: open ? 'var(--accent-a)' : 'transparent', 
                   color: open ? 'var(--accent)' : 'var(--text)' 
@@ -187,7 +192,7 @@ export default function Header() {
             animate={{ opacity: 1, backdropFilter: 'blur(24px)' }}
             exit={{ opacity: 0, backdropFilter: 'blur(0px)' }}
             transition={{ duration: 0.4 }}
-            className="fixed inset-0 z-[90] flex flex-col pt-24 px-6 pb-8 md:hidden"
+            className="fixed inset-0 z-[90] flex flex-col pt-24 px-6 pb-8 lg:hidden"
             style={{ background: dark ? 'rgba(26,26,26,.95)' : 'rgba(250,250,250,.95)' }}
           >
             <div className="flex flex-col gap-2 flex-1 overflow-y-auto">

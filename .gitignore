@@ -54,3 +54,4 @@ coverage/
 *.log
 *.pid
 *.seed
+claude.md
