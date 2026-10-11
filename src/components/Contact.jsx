@@ -4,9 +4,6 @@ import { useState, useEffect, useRef } from 'react'
 import { Mail, Phone, MapPin, Send, Github, Linkedin, Instagram, CheckCircle, XCircle } from 'lucide-react'
 import { portfolioData } from '../data/data'
 
-const TAPI  = 'https://api.telegram.org/bot7556029899:AAG3EogGPdL17WImWlbIT18R5eNU81U9IAA/sendMessage'
-const TCHAT = 6974520564
-
 const SOCIALS = [
   { icon: Github,    url: portfolioData.personal.github,    label: 'GitHub',    hc: 'var(--text)' },
   { icon: Linkedin,  url: portfolioData.personal.linkedin,  label: 'LinkedIn',  hc: '#0a66c2'     },
@@ -38,14 +35,14 @@ export default function Contact() {
     if (name.length < 2 || !email.includes('@') || message.length < 10) {
       setStatus('error'); setBusy(false); return
     }
-    const text = `📬 Portfolio Contact:\n👤 ${name}\n📧 ${email}\n📝 ${subject || 'N/A'}\n💬 ${message}`
     try {
-      const r = await fetch(TAPI, {
+      const r = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: TCHAT, text }),
+        body: JSON.stringify({ name, email, subject, message }),
       })
-      if (!r.ok) throw new Error()
+      const data = await r.json()
+      if (!r.ok) throw new Error(data.error || 'Failed to send')
       setStatus('success')
       setForm({ name: '', email: '', subject: '', message: '' })
     } catch {
