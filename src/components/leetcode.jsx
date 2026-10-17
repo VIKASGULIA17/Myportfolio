@@ -261,7 +261,7 @@ const LeetCode = () => {
     const T = getTheme(theme === 'dark');
     const DC = { Easy: T.green, Medium: T.yellow, Hard: T.red };
 
-    const username = 'vikas_gulia';
+    const username = 'guliav_12321';
 
     useEffect(() => { load(); }, []);
 
@@ -281,12 +281,12 @@ const LeetCode = () => {
             console.warn("LeetCode API error, using fallback data:", e.message);
             const fallbackData = {
                 profile: {
-                    username: 'vikas_gulia',
+                    username: 'guliav_12321',
                     name: 'Vikas Gulia',
                     about: 'utwlMDel',
                     country: 'India',
                     ranking: 91646,
-                    avatar: 'https://assets.leetcode.com/users/vikas_gulia/avatar_1753686431.png',
+                    avatar: 'https://assets.leetcode.com/users/guliav_12321/avatar_1753686431.png',
                     gitHub: 'https://github.com/VIKASGULIA17',
                     linkedIN: 'https://linkedin.com/in/vikas-gulia-b28255298',
                     school: 'Guru goving singh indraprasth university'
